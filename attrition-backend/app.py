@@ -3,6 +3,7 @@ from flask_cors import CORS
 import pandas as pd
 import numpy as np
 import os
+from chatbot import get_chatbot_instance
 
 app = Flask(__name__)
 CORS(app)
@@ -10,6 +11,9 @@ CORS(app)
 # Load the dataset
 dataset_path = '/home/Maanu/Documents/RoR Internship/Attrition-Analytics/datasets/HR-Employee-Attrition-All.csv'
 df = pd.read_csv(dataset_path)
+
+# Initialize chatbot with the dataset
+chatbot = get_chatbot_instance(df)
 
 @app.route('/api/attrition-by-age', methods=['GET'])
 def attrition_by_age():
@@ -316,6 +320,82 @@ def filtered_data():
     }
     
     return jsonify(result)
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    """Process a chat message and return the response."""
+    data = request.json
+    
+    if not data or 'message' not in data:
+        return jsonify({"error": "Missing message parameter"}), 400
+    
+    message = data['message']
+    
+    # Process the query using the chatbot
+    response = chatbot.process_query(message)
+    
+    return jsonify(response)
+
+@app.route('/api/chat/reset', methods=['POST'])
+def reset_chat():
+    """Reset the chat conversation history."""
+    chatbot.clear_conversation()
+    return jsonify({"status": "success", "message": "Chat conversation reset"})
+
+@app.route('/api/dataset-metadata', methods=['GET'])
+def dataset_metadata():
+    """Return metadata about the loaded dataset"""
+    result = {
+        'name': os.path.basename(dataset_path),
+        'rows': len(df),
+        'columns': len(df.columns),
+        'column_list': df.columns.tolist(),
+        'numeric_columns': df.select_dtypes(include=['number']).columns.tolist(),
+        'categorical_columns': df.select_dtypes(include=['object']).columns.tolist(),
+        'last_updated': os.path.getmtime(dataset_path),
+    }
+    
+    # Get sample values for categorical columns (limited to top 5)
+    categorical_preview = {}
+    for col in df.select_dtypes(include=['object']).columns[:5]:
+        categorical_preview[col] = df[col].value_counts().head(5).to_dict()
+    
+    # Get basic stats for numeric columns
+    numeric_preview = {}
+    for col in df.select_dtypes(include=['number']).columns[:5]:
+        numeric_preview[col] = {
+            'min': float(df[col].min()),
+            'max': float(df[col].max()),
+            'mean': float(df[col].mean()),
+            'median': float(df[col].median())
+        }
+        
+    result['categorical_preview'] = categorical_preview
+    result['numeric_preview'] = numeric_preview
+    
+    # Evaluate data quality
+    missing_values = df.isnull().sum().sum()
+    result['quality'] = {
+        'rating': 'Good' if missing_values == 0 else 'Fair' if missing_values < len(df) * 0.05 else 'Poor',
+        'missing_values': int(missing_values),
+        'missing_percentage': float(missing_values / (len(df) * len(df.columns)) * 100)
+    }
+    
+    return jsonify(result)
+
+@app.route('/api/quick-insights', methods=['GET'])
+def quick_insights():
+    """Return quick insights about the dataset for the sidebar"""
+    insights = {
+        'attrition_rate': float(len(df[df['Attrition'] == 'Yes']) / len(df) * 100),
+        'avg_satisfaction': float(df['JobSatisfaction'].mean()),
+        'avg_years': float(df['YearsAtCompany'].mean()),
+        'avg_age': float(df['Age'].mean()),
+        'top_department': df['Department'].value_counts().index[0],
+        'overtime_percentage': float(len(df[df['OverTime'] == 'Yes']) / len(df) * 100)
+    }
+    
+    return jsonify(insights)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

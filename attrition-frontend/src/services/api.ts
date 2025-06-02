@@ -6,7 +6,7 @@ export interface AttritionData {
   yesCount: number[];
   noCount: number[];
   rates: number[];
-}
+}   
 
 export interface OverallStatistics {
   totalEmployees: number;
@@ -29,6 +29,43 @@ export interface EmployeeCount {
   total: number;
   attrited: number;
   active: number;
+}
+
+// Chat API types
+export interface ChatRequest {
+  message: string;
+}
+
+export interface ChatResponse {
+  response: string;
+  status: 'success' | 'error';
+}
+
+// Dataset metadata types
+export interface DatasetMetadata {
+  name: string;
+  rows: number;
+  columns: number;
+  column_list: string[];
+  numeric_columns: string[];
+  categorical_columns: string[];
+  last_updated: number;
+  categorical_preview: Record<string, Record<string, number>>;
+  numeric_preview: Record<string, {min: number, max: number, mean: number, median: number}>;
+  quality: {
+    rating: 'Good' | 'Fair' | 'Poor';
+    missing_values: number;
+    missing_percentage: number;
+  };
+}
+
+export interface QuickInsights {
+  attrition_rate: number;
+  avg_satisfaction: number;
+  avg_years: number;
+  avg_age: number;
+  top_department: string;
+  overtime_percentage: number;
 }
 
 // API functions
@@ -108,6 +145,52 @@ export const fetchEmployeeCount = async (): Promise<EmployeeCount> => {
   const response = await fetch(`${API_BASE_URL}/employee-count`);
   if (!response.ok) {
     throw new Error('Failed to fetch employee count');
+  }
+  return response.json();
+};
+
+// Chat API functions
+export const sendChatMessage = async (message: string): Promise<ChatResponse> => {
+  const response = await fetch(`${API_BASE_URL}/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to send chat message');
+  }
+  
+  return response.json();
+};
+
+export const resetChatConversation = async (): Promise<{ status: string; message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/chat/reset`, {
+    method: 'POST',
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to reset chat conversation');
+  }
+  
+  return response.json();
+};
+
+// Dataset metadata functions
+export const fetchDatasetMetadata = async (): Promise<DatasetMetadata> => {
+  const response = await fetch(`${API_BASE_URL}/dataset-metadata`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch dataset metadata');
+  }
+  return response.json();
+};
+
+export const fetchQuickInsights = async (): Promise<QuickInsights> => {
+  const response = await fetch(`${API_BASE_URL}/quick-insights`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch quick insights');
   }
   return response.json();
 };

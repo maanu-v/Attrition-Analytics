@@ -1,0 +1,49 @@
+/* Global layout styles */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+/* Fix for date picker popover */
+.calendar-popover {
+  z-index: 50;
+}
+
+/* Fix for filter toggle button */
+.filter-toggle-button {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Improved typography for data display */
+.data-table th {
+  font-weight: 600;
+  color: #374151;
+}
+
+.data-table tr:hover td {
+  background-color: #f9fafb;
+}
+
+/* Better focus states */
+button:focus-visible, 
+input:focus-visible, 
+select:focus-visible, 
+textarea:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}

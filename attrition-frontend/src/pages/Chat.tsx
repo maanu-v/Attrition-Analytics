@@ -1,37 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, RotateCcw, Download, Database, X, Mic, Clock, FileText, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight, Eye, BarChart3, TrendingUp, Brain, AlertTriangle, FileSpreadsheet, Target, Settings, BotMessageSquare } from 'lucide-react';
+import { Send, RotateCcw, ChevronLeft, ChevronRight, Settings, BotMessageSquare, Database, Eye, BarChart3, Brain, AlertTriangle, FileSpreadsheet, Target, Clock, TrendingUp, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
-import DatasetImportModal from '@/components/chat/DatasetImportModal';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { 
+  sendChatMessage, 
+  resetChatConversation, 
+  fetchDatasetMetadata, 
+  fetchQuickInsights,
+  DatasetMetadata,
+  QuickInsights 
+} from '@/services/api';
 
 interface Message {
   id: string;
   type: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  attachments?: Array<{ type: 'image' | 'file'; url: string; name: string }>;
-  action?: {
-    name: string;
-    color: string;
-  };
 }
 
-interface Dataset {
-  id: string;
+interface AnalysisAction {
   name: string;
-  fileName: string;
-  rows: number;
-  columns: number;
-  updatedAt: Date;
-  quality: 'Good' | 'Fair' | 'Poor';
-  columnPreview: string[];
+  icon: React.ElementType;
+  color: string;
+  description: string;
 }
 
 const Chat = () => {
@@ -42,59 +40,62 @@ const Chat = () => {
     {
       id: '1',
       type: 'assistant',
-      content: 'Hello! I can help you analyze your HR data, create visualizations, and provide insights on employee performance, attrition, and demographics. What would you like to explore today?',
-      timestamp: new Date(Date.now() - 60000)
+      content: 'Hello! I can help you analyze HR data and provide insights on employee performance, attrition, and demographics. What would you like to know?',
+      timestamp: new Date(),
     }
   ]);
   
-  const [datasets] = useState<Dataset[]>([
-    {
-      id: '1',
-      name: 'Employee_Data_2024.csv',
-      fileName: 'Employee_Data_2024.csv',
-      rows: 1247,
-      columns: 15,
-      updatedAt: new Date(Date.now() - 7200000),
-      quality: 'Good',
-      columnPreview: ['Employee_ID', 'Name', 'Department', 'Position', 'Salary', 'Performance_Score', 'Attrition_Risk', 'Hire_Date', 'Manager_ID']
-    },
-    {
-      id: '2',
-      name: 'Performance_Reviews_2024.csv',
-      fileName: 'Performance_Reviews_2024.csv',
-      rows: 1180,
-      columns: 12,
-      updatedAt: new Date(Date.now() - 3600000),
-      quality: 'Good',
-      columnPreview: ['Review_ID', 'Employee_ID', 'Quarter', 'Rating', 'Goals_Met', 'Feedback', 'Improvement_Areas']
-    },
-    {
-      id: '3',
-      name: 'Salary_Data_2023-2024.csv',
-      fileName: 'Salary_Data_2023-2024.csv',
-      rows: 2495,
-      columns: 8,
-      updatedAt: new Date(Date.now() - 1800000),
-      quality: 'Fair',
-      columnPreview: ['Employee_ID', 'Base_Salary', 'Bonus', 'Benefits', 'Total_Compensation', 'Year', 'Department']
-    }
-  ]);
-  
-  const [currentDatasetIndex, setCurrentDatasetIndex] = useState(0);
-  const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  // Sidebar states
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [imagePreview, setImagePreview] = useState<{ url: string; name: string } | null>(null);
+  const [datasetMetadata, setDatasetMetadata] = useState<DatasetMetadata | null>(null);
+  const [quickInsights, setQuickInsights] = useState<QuickInsights | null>(null);
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  const [selectedAnalysisType, setSelectedAnalysisType] = useState<string | null>(null);
+  
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [datasetImportOpen, setDatasetImportOpen] = useState(false);
-  const [selectedAction, setSelectedAction] = useState<{
-    name: string;
-    color: string;
-  } | null>(null);
-  const capsuleRef = useRef<HTMLDivElement>(null);
-  const [capsuleWidth, setCapsuleWidth] = useState<number>(0);
-
+  
+  // Fetch dataset metadata and quick insights
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      setIsLoadingMetadata(true);
+      try {
+        const metadata = await fetchDatasetMetadata();
+        setDatasetMetadata(metadata);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch dataset metadata",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingMetadata(false);
+      }
+    };
+    
+    const fetchInsights = async () => {
+      setIsLoadingInsights(true);
+      try {
+        const insights = await fetchQuickInsights();
+        setQuickInsights(insights);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch quick insights",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingInsights(false);
+      }
+    };
+    
+    fetchMetadata();
+    fetchInsights();
+  }, [toast]);
+  
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -104,35 +105,56 @@ const Chat = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return;
 
-    const newMessage: Message = {
+    // Add selected analysis type to the message if selected
+    const messageText = selectedAnalysisType 
+      ? `[${selectedAnalysisType} Analysis] ${inputValue.trim()}`
+      : inputValue.trim();
+
+    const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
-      content: inputValue,
+      content: messageText,
       timestamp: new Date(),
-      action: selectedAction // Add this to your Message interface
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setSelectedAction(null); // Reset the selected action after sending
-    setIsTyping(true);
+    setSelectedAnalysisType(null);
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: Message = {
+    try {
+      const response = await sendChatMessage(messageText);
+      
+      if (response.status === 'success') {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: response.response,
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        throw new Error(response.response || 'Failed to get response');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to process your request",
+        variant: "destructive"
+      });
+      
+      setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: 'I understand you\'re looking for insights about your HR data. Let me analyze the current dataset and provide you with relevant metrics. Based on the employee data, I can see some interesting patterns in attrition rates and performance metrics.',
+        content: "I'm sorry, I encountered an error processing your request. Please try again.",
         timestamp: new Date(),
-        attachments: [
-          { type: 'image', url: '/placeholder.svg', name: 'attrition_chart.png' }
-        ]
-      };
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-    }, 2000);
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -142,81 +164,164 @@ const Chat = () => {
     }
   };
 
-  const openImagePreview = (url: string, name: string) => {
-    setImagePreview({ url, name });
-  };
-
-  const handleDatasetImport = (datasets: any[]) => {
-    toast({
-      title: "Datasets imported",
-      description: `${datasets.length} dataset${datasets.length > 1 ? 's' : ''} ready for analysis.`,
-    });
-  };
-
-  const nextDataset = () => {
-    setCurrentDatasetIndex((prev) => (prev + 1) % datasets.length);
-  };
-
-  const prevDataset = () => {
-    setCurrentDatasetIndex((prev) => (prev - 1 + datasets.length) % datasets.length);
-  };
-
-  const suggestionChips = [
-    'Show employee attrition trend',
-    'Top 5 performers this quarter',
-    'Department-wise salary analysis',
-    'Predict high-risk employees'
-  ];
-
-  const quickInsights = [
-    { label: 'Attrition Rate', value: '12.3%', color: 'bg-blue-100 text-blue-700' },
-    { label: 'Avg Performance', value: '4.2', color: 'bg-green-100 text-green-700' },
-    { label: 'Open Positions', value: '23', color: 'bg-orange-100 text-orange-700' },
-    { label: 'Avg Tenure', value: '3.7yr', color: 'bg-purple-100 text-purple-700' },
-    { label: 'Training Hours', value: '42.5', color: 'bg-teal-100 text-teal-700' },
-    { label: 'Satisfaction', value: '8.1/10', color: 'bg-pink-100 text-pink-700' }
-  ];
-
-  const availableActions = [
-    { name: 'Descriptive analysis', icon: BarChart3, color: 'text-blue-500 hover:bg-blue-50' },
-    { name: 'Predictive analysis', icon: TrendingUp, color: 'text-emerald-500 hover:bg-emerald-50' },
-    { name: 'Prescriptive analysis', icon: Brain, color: 'text-purple-500 hover:bg-purple-50' },
-    { name: 'Statistical summary', icon: FileSpreadsheet, color: 'text-orange-500 hover:bg-orange-50' },
-    { name: 'Generate reports', icon: FileText, color: 'text-slate-600 hover:bg-slate-50' },
-    { name: 'Risk assessment', icon: AlertTriangle, color: 'text-red-500 hover:bg-red-50' },
-    { name: 'Trend forecasting', icon: Target, color: 'text-indigo-500 hover:bg-indigo-50' },
-    { name: 'Time series analysis', icon: Clock, color: 'text-cyan-500 hover:bg-cyan-50' }
-  ];
-
-  // Update the getBrightColor function with softer gradients
-  const getBrightColor = (actionName: string) => {
-    const colors: { [key: string]: string } = {
-      'Descriptive analysis': 'bg-gradient-to-r from-blue-400/90 to-blue-500/90 text-white',
-      'Predictive analysis': 'bg-gradient-to-r from-emerald-400/90 to-emerald-500/90 text-white',
-      'Prescriptive analysis': 'bg-gradient-to-r from-purple-400/90 to-purple-500/90 text-white',
-      'Statistical summary': 'bg-gradient-to-r from-orange-400/90 to-orange-500/90 text-white',
-      'Generate reports': 'bg-gradient-to-r from-slate-400/90 to-slate-500/90 text-white',
-      'Risk assessment': 'bg-gradient-to-r from-red-400/90 to-red-500/90 text-white',
-      'Trend forecasting': 'bg-gradient-to-r from-indigo-400/90 to-indigo-500/90 text-white',
-      'Time series analysis': 'bg-gradient-to-r from-cyan-400/90 to-cyan-500/90 text-white'
-    };
-    return colors[actionName] || 'bg-gradient-to-r from-gray-400/90 to-gray-500/90 text-white';
+  const handleResetChat = async () => {
+    try {
+      await resetChatConversation();
+      
+      setMessages([{
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: 'Hello! I can help you analyze HR data and provide insights on employee performance, attrition, and demographics. What would you like to know?',
+        timestamp: new Date(),
+      }]);
+      
+      toast({
+        title: "Chat Reset",
+        description: "The conversation has been reset."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reset the conversation",
+        variant: "destructive"
+      });
+    }
   };
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
-
-  const currentDataset = datasets[currentDatasetIndex];
-
-  useEffect(() => {
-    if (selectedAction && capsuleRef.current) {
-      const width = capsuleRef.current.offsetWidth;
-      setCapsuleWidth(width + 16); // Add 16px for padding (8px on each side)
-    } else {
-      setCapsuleWidth(0);
+  
+  const formatTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  };
+  
+  const analysisTypes: AnalysisAction[] = [
+    { 
+      name: 'Descriptive', 
+      icon: BarChart3, 
+      color: 'text-blue-500 hover:bg-blue-50',
+      description: 'Summarize data patterns and current state'
+    },
+    { 
+      name: 'Diagnostic', 
+      icon: FileSpreadsheet, 
+      color: 'text-orange-500 hover:bg-orange-50',
+      description: 'Uncover why patterns exist in the data'
+    },
+    { 
+      name: 'Predictive', 
+      icon: TrendingUp, 
+      color: 'text-emerald-500 hover:bg-emerald-50',
+      description: 'Forecast future trends based on data'
+    },
+    { 
+      name: 'Prescriptive', 
+      icon: Brain, 
+      color: 'text-purple-500 hover:bg-purple-50',
+      description: 'Recommend actions based on insights'
+    },
+    { 
+      name: 'Risk', 
+      icon: AlertTriangle, 
+      color: 'text-red-500 hover:bg-red-50',
+      description: 'Identify potential attrition risks'
+    },
+    { 
+      name: 'Trend', 
+      icon: Target, 
+      color: 'text-indigo-500 hover:bg-indigo-50',
+      description: 'Analyze patterns over time periods'
     }
-  }, [selectedAction]);
+  ];
+
+  const getBrightColor = (analysisName: string) => {
+    const colors: Record<string, string> = {
+      'Descriptive': 'bg-gradient-to-r from-blue-400/90 to-blue-500/90 text-white',
+      'Diagnostic': 'bg-gradient-to-r from-orange-400/90 to-orange-500/90 text-white',
+      'Predictive': 'bg-gradient-to-r from-emerald-400/90 to-emerald-500/90 text-white',
+      'Prescriptive': 'bg-gradient-to-r from-purple-400/90 to-purple-500/90 text-white',
+      'Risk': 'bg-gradient-to-r from-red-400/90 to-red-500/90 text-white',
+      'Trend': 'bg-gradient-to-r from-indigo-400/90 to-indigo-500/90 text-white'
+    };
+    return colors[analysisName] || 'bg-gradient-to-r from-gray-400/90 to-gray-500/90 text-white';
+  };
+
+  const suggestedQueries = [
+    "What factors contribute most to employee attrition?",
+    "Compare attrition rates across departments",
+    "Predict which employees are at highest risk of leaving",
+    "How does job satisfaction affect attrition?",
+    "Recommend actions to reduce attrition in sales"
+  ];
+
+  // Render formatted message content with proper styling
+  const renderMessageContent = (content: string, messageType: 'user' | 'assistant') => {
+    // Only apply markdown formatting to assistant messages
+    if (messageType === 'user') {
+      return <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>;
+    }
+    
+    return (
+      <div className="markdown-content text-sm leading-relaxed">
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          components={{
+            // Style headings
+            h1: ({ node, ...props }) => <h1 className="text-lg font-bold my-2" {...props} />,
+            h2: ({ node, ...props }) => <h2 className="text-base font-bold my-2" {...props} />,
+            h3: ({ node, ...props }) => <h3 className="text-sm font-bold my-1" {...props} />,
+            
+            // Style lists
+            ul: ({ node, ...props }) => <ul className="list-disc pl-4 my-2" {...props} />,
+            ol: ({ node, ...props }) => <ol className="list-decimal pl-4 my-2" {...props} />,
+            li: ({ node, ...props }) => <li className="my-1" {...props} />,
+            
+            // Style emphasis
+            strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
+            em: ({ node, ...props }) => <em className="italic" {...props} />,
+            
+            // Style code blocks
+            code: ({ node, inline, className, children, ...props }) => {
+              if (inline) {
+                return <code className="bg-gray-100 px-1 rounded text-sm font-mono" {...props}>{children}</code>;
+              }
+              return (
+                <pre className="bg-gray-100 p-2 rounded text-sm font-mono overflow-x-auto my-2">
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                </pre>
+              );
+            },
+            
+            // Style paragraphs and other elements
+            p: ({ node, ...props }) => <p className="my-2" {...props} />,
+            blockquote: ({ node, ...props }) => (
+              <blockquote className="border-l-4 border-gray-300 pl-4 italic my-2" {...props} />
+            ),
+            hr: ({ node, ...props }) => <hr className="my-4 border-t border-gray-300" {...props} />,
+            a: ({ node, ...props }) => (
+              <a className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
+            ),
+            table: ({ node, ...props }) => (
+              <div className="overflow-x-auto my-2">
+                <table className="min-w-full border-collapse border border-gray-300" {...props} />
+              </div>
+            ),
+            thead: ({ node, ...props }) => <thead className="bg-gray-100" {...props} />,
+            tbody: ({ node, ...props }) => <tbody {...props} />,
+            tr: ({ node, ...props }) => <tr className="border-b border-gray-300" {...props} />,
+            th: ({ node, ...props }) => <th className="border border-gray-300 px-3 py-1 text-left" {...props} />,
+            td: ({ node, ...props }) => <td className="border border-gray-300 px-3 py-1" {...props} />
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    );
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -230,21 +335,26 @@ const Chat = () => {
             className="text-gray-600 hover:text-gray-900"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Home
+            Back to Dashboard
           </Button>
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <BotMessageSquare className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-semibold text-gray-900">Assistant</h1>
+            <h1 className="text-xl font-semibold text-gray-900">HR Analytics Assistant</h1>
           </div>
         </div>
         
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export Chat
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleResetChat}
+            disabled={isLoading || messages.length <= 1}
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Reset Chat
           </Button>
           <Button variant="outline" size="sm">
             <Settings className="w-4 h-4 mr-2" />
@@ -255,7 +365,7 @@ const Chat = () => {
       
       <div className="flex flex-1 pt-16">
         {/* Main Chat Area */}
-        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'mr-96' : 'mr-0'}`}>
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'mr-80' : 'mr-0'}`}>
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.map((message) => (
@@ -263,70 +373,20 @@ const Chat = () => {
                 <div className={`max-w-2xl ${message.type === 'user' ? 'order-2' : 'order-1'}`}>
                   <div className={`rounded-2xl px-4 py-3 shadow-sm ${
                     message.type === 'user' 
-                      ? 'bg-blue-600 text-white ml-auto' 
+                      ? 'bg-blue-600 text-white' 
                       : 'bg-white text-gray-900 border border-gray-200'
                   }`}>
-                    {message.action && (
-                      <div className={`inline-flex items-center px-2 py-1 rounded-full text-sm ${message.action.color} bg-gray-50/10 mb-2`}>
-                        {message.action.name}
-                      </div>
-                    )}
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                    
-                    {message.attachments && (
-                      <div className="mt-3 space-y-2">
-                        {message.attachments.map((attachment, index) => (
-                          <div key={index} className="relative">
-                            {attachment.type === 'image' ? (
-                              <div 
-                                className="bg-gray-100 rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer"
-                                onClick={() => openImagePreview(attachment.url, attachment.name)}
-                              >
-                                <img 
-                                  src={attachment.url} 
-                                  alt={attachment.name}
-                                  className="w-full h-48 object-cover rounded-md bg-gray-200"
-                                />
-                                <div className="flex items-center justify-between mt-2">
-                                  <span className="text-xs text-gray-600">{attachment.name}</span>
-                                  <Button size="sm" variant="ghost" className="h-6 px-2">
-                                    <Download className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-2">
-                                <FileText className="w-4 h-4 text-gray-600" />
-                                <span className="text-sm text-gray-700">{attachment.name}</span>
-                                <Button size="sm" variant="ghost" className="h-6 px-2 ml-auto">
-                                  <Download className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {renderMessageContent(message.content, message.type)}
                   </div>
                   
                   <div className={`flex items-center mt-2 space-x-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
-                    {message.type === 'assistant' && (
-                      <div className="flex space-x-1">
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-green-50">
-                          <ThumbsUp className="w-3 h-3 text-gray-400 hover:text-green-600" />
-                        </Button>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-red-50">
-                          <ThumbsDown className="w-3 h-3 text-gray-400 hover:text-red-600" />
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
             ))}
             
-            {isTyping && (
+            {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-white text-gray-900 shadow-sm border border-gray-200 rounded-2xl px-4 py-3 max-w-xs">
                   <div className="flex space-x-1">
@@ -341,18 +401,18 @@ const Chat = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggestion Chips */}
+          {/* Suggested Queries */}
           <div className="px-6 py-3 border-t border-gray-200 bg-white">
             <div className="flex flex-wrap gap-2 mb-4">
-              {suggestionChips.map((suggestion, index) => (
+              {suggestedQueries.map((query, index) => (
                 <Button
                   key={index}
                   variant="outline"
                   size="sm"
                   className="text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                  onClick={() => setInputValue(suggestion)}
+                  onClick={() => setInputValue(query)}
                 >
-                  {suggestion}
+                  {query}
                 </Button>
               ))}
             </div>
@@ -361,50 +421,33 @@ const Chat = () => {
             <div className="flex space-x-4">
               <div className="flex-1 relative">
                 <div className="relative">
+                  {selectedAnalysisType && (
+                    <div className="absolute left-2.5 top-[10px] inline-flex items-center px-2 py-1 rounded text-xs font-medium shadow-sm z-10">
+                      <span className={`px-2 py-0.5 rounded-full ${getBrightColor(selectedAnalysisType)}`}>
+                        {selectedAnalysisType} Analysis
+                        <button 
+                          className="ml-1 text-white opacity-80 hover:opacity-100"
+                          onClick={() => setSelectedAnalysisType(null)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    </div>
+                  )}
                   <Textarea
                     ref={textareaRef}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Ask me anything about your HR data..."
-                    className={`min-h-[50px] max-h-32 resize-none pr-20 border-gray-300 focus:border-blue-500 focus:ring-blue-500`}
-                    style={{
-                      paddingLeft: selectedAction ? `${capsuleWidth}px` : '0.75rem'
-                    }}
+                    placeholder="Ask me about HR analytics, attrition factors, employee performance..."
+                    className={`min-h-[50px] max-h-32 resize-none border-gray-300 focus:border-blue-500 focus:ring-blue-500 ${selectedAnalysisType ? 'pl-32' : 'pl-3'}`}
+                    disabled={isLoading}
                   />
-                  {selectedAction && (
-                    <div 
-                      ref={capsuleRef}
-                      className={`absolute left-2.5 top-[10px] inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shadow-sm ${getBrightColor(selectedAction.name)}`}
-                      style={{ fontSize: '0.75rem', lineHeight: '1rem' }}
-                    >
-                      {selectedAction.name}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0 ml-1 hover:bg-transparent opacity-80 hover:opacity-100"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedAction(null);
-                        }}
-                      >
-                        <X className="h-2 w-2 text-white" />
-                      </Button>
-                    </div>
-                  )}
-                  <div className="absolute right-2 bottom-2 flex space-x-1">
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                      <Paperclip className="w-4 h-4 text-gray-500" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                      <Mic className="w-4 h-4 text-gray-500" />
-                    </Button>
-                  </div>
                 </div>
               </div>
               <Button 
                 onClick={handleSendMessage}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isLoading}
                 className="h-[59px] px-6 bg-blue-600 hover:bg-blue-700"
               >
                 <Send className="w-5 h-5" />
@@ -415,7 +458,7 @@ const Chat = () => {
 
         {/* Sidebar */}
         <div className={`fixed top-16 right-0 h-[calc(100vh-4rem)] bg-white border-l border-gray-200 shadow-lg transition-all duration-300 z-40 ${
-          sidebarOpen ? 'w-96' : 'w-0'
+          sidebarOpen ? 'w-80' : 'w-0'
         }`}>
           {/* Sidebar Toggle Button */}
           <Button
@@ -424,70 +467,54 @@ const Chat = () => {
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="absolute -left-12 top-4 h-9 w-9 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 z-50 flex items-center justify-center"
           >
-            {sidebarOpen ? <ChevronRight className="w-7 h-7" /> : <ChevronLeft className="w-4 h-4" />}
+            {sidebarOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </Button>
 
           {sidebarOpen && (
-            <div className="h-full overflow-y-auto">
-              <div className="p-4 space-y-4">
-                {/* Import Dataset Button */}
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  onClick={() => setDatasetImportOpen(true)}
-                >
-                  <Database className="w-4 h-4 mr-2" />
-                  Import Dataset
-                </Button>
-
-                {/* Dataset Summary Container */}
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">Dataset Summary</h3>
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={prevDataset}
-                        className="h-6 w-6 p-0"
-                      >
-                        <ChevronLeft className="w-3 h-3" />
-                      </Button>
-                      <span className="text-sm text-gray-500">{currentDatasetIndex + 1} / {datasets.length}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={nextDataset}
-                        className="h-6 w-6 p-0"
-                      >
-                        <ChevronRight className="w-3 h-3" />
-                      </Button>
-                    </div>
+            <div className="h-full overflow-y-auto p-4 space-y-4">
+              {/* Dataset Information */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2">Dataset Information</h3>
+                
+                {isLoadingMetadata ? (
+                  <div className="flex justify-center items-center h-24">
+                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
                   </div>
-
+                ) : datasetMetadata ? (
                   <div className="space-y-3">
                     <div>
-                      <h4 className="font-medium text-gray-900 text-sm">{currentDataset.name}</h4>
-                      <p className="text-sm text-gray-500">{currentDataset.rows.toLocaleString()} rows • {currentDataset.columns} columns</p>
-                      <p className="text-xs text-gray-400">Updated: 2 hours ago</p>
+                      <h4 className="font-medium text-gray-900 text-sm">{datasetMetadata.name}</h4>
+                      <p className="text-sm text-gray-500">
+                        {datasetMetadata.rows.toLocaleString()} rows • {datasetMetadata.columns} columns
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Updated: {formatTimestamp(datasetMetadata.last_updated)}
+                      </p>
                     </div>
                     
                     <div className="flex items-center justify-between">
                       <Badge 
-                        variant={currentDataset.quality === 'Good' ? 'default' : 'secondary'}
-                        className={currentDataset.quality === 'Good' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'}
+                        variant={datasetMetadata.quality.rating === 'Good' ? 'default' : 'secondary'}
+                        className={
+                          datasetMetadata.quality.rating === 'Good' 
+                            ? 'bg-green-100 text-green-800 border-green-200' 
+                            : datasetMetadata.quality.rating === 'Fair'
+                              ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                              : 'bg-red-100 text-red-800 border-red-200'
+                        }
                       >
-                        {currentDataset.quality} Quality
+                        {datasetMetadata.quality.rating} Quality
                       </Badge>
                       <Button variant="outline" size="sm">
                         <Eye className="w-4 h-4 mr-1" />
-                        View Table
+                        View Data
                       </Button>
                     </div>
 
                     <div>
                       <Label className="text-sm font-medium text-gray-700 mb-2 block">Column Preview:</Label>
                       <div className="flex flex-wrap gap-1">
-                        {currentDataset.columnPreview.slice(0, 9).map((column, index) => (
+                        {datasetMetadata.column_list.slice(0, 9).map((column, index) => (
                           <Badge
                             key={index}
                             variant="outline"
@@ -496,76 +523,102 @@ const Chat = () => {
                             {column}
                           </Badge>
                         ))}
+                        {datasetMetadata.column_list.length > 9 && (
+                          <Badge variant="outline" className="text-xs bg-white text-gray-500 border-gray-300">
+                            +{datasetMetadata.column_list.length - 9} more
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Available Actions Container */}
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Available Actions</h5>
-                  <div className="space-y-2">
-                    {availableActions.map((action, index) => (
-                      <Button 
-                        key={index}
-                        variant="ghost" 
-                        size="sm" 
-                        className={`w-full justify-start ${action.color} hover:bg-gray-100`}
-                        onClick={() => {
-                          setSelectedAction({
-                            name: action.name,
-                            color: getBrightColor(action.name) // Use getBrightColor here
-                          });
-                          textareaRef.current?.focus();
-                        }}
-                      >
-                        <action.icon className="w-4 h-4 mr-2" />
-                        {action.name}
-                      </Button>
-                    ))}
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    No dataset information available
                   </div>
-                </div>
+                )}
+              </div>
 
-                {/* Quick Insights */}
-                <div className="flex-1">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Quick Insights</h5>
+              {/* Quick Insights */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2">Quick Insights</h3>
+                
+                {isLoadingInsights ? (
+                  <div className="flex justify-center items-center h-24">
+                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                  </div>
+                ) : quickInsights ? (
                   <div className="grid grid-cols-2 gap-3">
-                    {quickInsights.map((insight, index) => (
-                      <div key={index} className={`p-3 rounded-lg ${insight.color}`}>
-                        <div className="text-xs font-medium">{insight.label}</div>
-                        <div className="text-lg font-bold">{insight.value}</div>
-                      </div>
-                    ))}
+                    <div className="p-3 rounded-lg bg-blue-100 text-blue-700">
+                      <div className="text-xs font-medium">Attrition Rate</div>
+                      <div className="text-lg font-bold">{quickInsights.attrition_rate.toFixed(1)}%</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-green-100 text-green-700">
+                      <div className="text-xs font-medium">Avg Job Satisfaction</div>
+                      <div className="text-lg font-bold">{quickInsights.avg_satisfaction.toFixed(1)}/4</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-orange-100 text-orange-700">
+                      <div className="text-xs font-medium">Avg Tenure</div>
+                      <div className="text-lg font-bold">{quickInsights.avg_years.toFixed(1)} yrs</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-purple-100 text-purple-700">
+                      <div className="text-xs font-medium">Avg Age</div>
+                      <div className="text-lg font-bold">{quickInsights.avg_age.toFixed(1)} yrs</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-teal-100 text-teal-700">
+                      <div className="text-xs font-medium">Top Department</div>
+                      <div className="text-lg font-bold truncate">{quickInsights.top_department}</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-pink-100 text-pink-700">
+                      <div className="text-xs font-medium">Overtime</div>
+                      <div className="text-lg font-bold">{quickInsights.overtime_percentage.toFixed(1)}%</div>
+                    </div>
                   </div>
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    No insights available
+                  </div>
+                )}
+              </div>
+
+              {/* Analysis Types */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2">Analysis Types</h3>
+                <div className="space-y-2">
+                  {analysisTypes.map((analysis, index) => (
+                    <div 
+                      key={index}
+                      className={`p-2 rounded-lg cursor-pointer transition-colors ${
+                        selectedAnalysisType === analysis.name
+                          ? getBrightColor(analysis.name)
+                          : `bg-white hover:bg-gray-50 ${analysis.color}`
+                      }`}
+                      onClick={() => setSelectedAnalysisType(analysis.name)}
+                    >
+                      <div className="flex items-center">
+                        <analysis.icon className={`w-5 h-5 mr-2 ${
+                          selectedAnalysisType === analysis.name ? 'text-white' : ''
+                        }`} />
+                        <div>
+                          <div className={`font-medium ${
+                            selectedAnalysisType === analysis.name ? 'text-white' : ''
+                          }`}>
+                            {analysis.name} Analysis
+                          </div>
+                          <p className={`text-xs ${
+                            selectedAnalysisType === analysis.name ? 'text-white/80' : 'text-gray-500'
+                          }`}>
+                            {analysis.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* Dataset Import Modal */}
-      <DatasetImportModal
-        open={datasetImportOpen}
-        onOpenChange={setDatasetImportOpen}
-        onImport={handleDatasetImport}
-      />
-
-      {/* Image Preview Dialog */}
-      <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>{imagePreview?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="flex justify-center">
-            <img 
-              src={imagePreview?.url} 
-              alt={imagePreview?.name}
-              className="max-w-full max-h-[70vh] object-contain"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

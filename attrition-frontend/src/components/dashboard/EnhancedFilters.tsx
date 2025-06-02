@@ -1,83 +1,137 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { 
-  Filter, 
-  CalendarIcon, 
-  X, 
-  RefreshCw,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight, 
-  Building2
-} from 'lucide-react';
 import { format } from 'date-fns';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  CalendarIcon, 
+  FilterX,
+  Filter
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface EnhancedFiltersProps {
+interface FilterProps {
   collapsed: boolean;
   onToggle: () => void;
   onFiltersApplied: (filters: any) => void;
+  initialFilters?: any;
+  onClearFilters?: () => void;
 }
 
-const EnhancedFilters = ({ collapsed, onToggle, onFiltersApplied }: EnhancedFiltersProps) => {
-  const [tenureRange, setTenureRange] = useState([0, 20]);
-  const [satisfactionRange, setSatisfactionRange] = useState([1, 5]);
-  const [performanceRange, setPerformanceRange] = useState([1, 5]);
+interface RangeValue {
+  min: number;
+  max: number;
+}
+
+const departments = ['Sales', 'HR', 'Research & Development', 'IT', 'Marketing', 'Finance'];
+
+const EnhancedFilters: React.FC<FilterProps> = ({ 
+  collapsed, 
+  onToggle, 
+  onFiltersApplied, 
+  initialFilters = {},
+  onClearFilters
+}) => {
+  // Filter state with improved range handling
+  const [tenureRange, setTenureRange] = useState<RangeValue>({ min: 0, max: 40 });
+  const [satisfactionRange, setSatisfactionRange] = useState<RangeValue>({ min: 1, max: 4 });
+  const [performanceRange, setPerformanceRange] = useState<RangeValue>({ min: 1, max: 5 });
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [onlyAtRisk, setOnlyAtRisk] = useState(false);
-  const [selectedGender, setSelectedGender] = useState('all');
-  const [selectedEducation, setSelectedEducation] = useState('all');
-  const [selectedRole, setSelectedRole] = useState('all');
-  const [dateFrom, setDateFrom] = useState<Date>();
-  const [dateTo, setDateTo] = useState<Date>();
-  const [departmentDropdownOpen, setDepartmentDropdownOpen] = useState(false);
-  const [availableDepartments, setAvailableDepartments] = useState<string[]>([
-    'Sales', 'Research & Development', 'Human Resources'
-  ]);
+  const [gender, setGender] = useState('all');
+  const [education, setEducation] = useState('all');
+  const [role, setRole] = useState('all');
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined,
+  });
   
-  const educationLevels = [
-    { label: 'High School', value: 'highschool' },
-    { label: 'Bachelor\'s', value: 'bachelors' },
-    { label: 'Master\'s', value: 'masters' },
-    { label: 'PhD', value: 'phd' }
-  ];
-
-  const roles = [
-    { label: 'Entry Level', value: 'entrylevel' },
-    { label: 'Mid Level', value: 'midlevel' },
-    { label: 'Senior Level', value: 'seniorlevel' },
-    { label: 'Lead', value: 'lead' },
-    { label: 'Manager', value: 'manager' },
-    { label: 'Director', value: 'director' }
-  ];
-
-  // Load departments from backend when component mounts
+  // Initialize filters from props if provided
   useEffect(() => {
-    fetch('http://localhost:8000/api/attrition-by-department')
-      .then(response => response.json())
-      .then(data => {
-        if (data && data.labels) {
-          setAvailableDepartments(data.labels);
-        }
-      })
-      .catch(error => console.error('Error fetching departments:', error));
-  }, []);
+    if (initialFilters && Object.keys(initialFilters).length > 0) {
+      if (initialFilters.tenureRange) {
+        setTenureRange({ 
+          min: initialFilters.tenureRange[0], 
+          max: initialFilters.tenureRange[1] 
+        });
+      }
+      
+      if (initialFilters.satisfactionRange) {
+        setSatisfactionRange({ 
+          min: initialFilters.satisfactionRange[0], 
+          max: initialFilters.satisfactionRange[1] 
+        });
+      }
+      
+      if (initialFilters.performanceRange) {
+        setPerformanceRange({ 
+          min: initialFilters.performanceRange[0], 
+          max: initialFilters.performanceRange[1] 
+        });
+      }
+      
+      if (initialFilters.departments) setSelectedDepartments(initialFilters.departments);
+      if (initialFilters.onlyAtRisk !== undefined) setOnlyAtRisk(initialFilters.onlyAtRisk);
+      if (initialFilters.gender) setGender(initialFilters.gender);
+      if (initialFilters.education) setEducation(initialFilters.education);
+      if (initialFilters.role) setRole(initialFilters.role);
+      if (initialFilters.dateRange) setDateRange(initialFilters.dateRange);
+    }
+  }, [initialFilters]);
   
-  const handleDepartmentToggle = (dept: string) => {
+  const handleApplyFilters = () => {
+    const filters = {
+      tenureRange: [tenureRange.min, tenureRange.max],
+      satisfactionRange: [satisfactionRange.min, satisfactionRange.max],
+      performanceRange: [performanceRange.min, performanceRange.max],
+      departments: selectedDepartments,
+      onlyAtRisk,
+      gender,
+      education,
+      role,
+      dateRange
+    };
+    
+    onFiltersApplied(filters);
+  };
+  
+  const handleClearFilters = () => {
+    setTenureRange({ min: 0, max: 40 });
+    setSatisfactionRange({ min: 1, max: 4 });
+    setPerformanceRange({ min: 1, max: 5 });
+    setSelectedDepartments([]);
+    setOnlyAtRisk(false);
+    setGender('all');
+    setEducation('all');
+    setRole('all');
+    setDateRange({
+      from: undefined,
+      to: undefined,
+    });
+    
+    if (onClearFilters) {
+      onClearFilters();
+    }
+  };
+  
+  const handleDepartmentChange = (dept: string) => {
     setSelectedDepartments(prev => 
       prev.includes(dept) 
         ? prev.filter(d => d !== dept)
@@ -85,201 +139,235 @@ const EnhancedFilters = ({ collapsed, onToggle, onFiltersApplied }: EnhancedFilt
     );
   };
 
-  const handleApplyFilters = () => {
-    const filters = {
-      tenureRange,
-      satisfactionRange,
-      performanceRange,
-      departments: selectedDepartments,
-      onlyAtRisk,
-      gender: selectedGender,
-      education: selectedEducation,
-      role: selectedRole,
-      dateRange: { from: dateFrom, to: dateTo }
-    };
-    
-    onFiltersApplied(filters);
+  // Helper functions to handle slider changes
+  const handleTenureMinChange = (value: number) => {
+    setTenureRange(prev => ({ ...prev, min: Math.min(value, prev.max - 1) }));
   };
 
-  const handleResetFilters = () => {
-    setTenureRange([0, 20]);
-    setSatisfactionRange([1, 5]);
-    setPerformanceRange([1, 5]);
-    setSelectedDepartments([]);
-    setOnlyAtRisk(false);
-    setSelectedGender('all');
-    setSelectedEducation('all');
-    setSelectedRole('all');
-    setDateFrom(undefined);
-    setDateTo(undefined);
+  const handleTenureMaxChange = (value: number) => {
+    setTenureRange(prev => ({ ...prev, max: Math.max(value, prev.min + 1) }));
   };
 
-  const activeFiltersCount = [
-    tenureRange[0] > 0 || tenureRange[1] < 20,
-    satisfactionRange[0] > 1 || satisfactionRange[1] < 5,
-    performanceRange[0] > 1 || performanceRange[1] < 5,
-    selectedDepartments.length > 0,
-    onlyAtRisk,
-    selectedGender !== 'all',
-    selectedEducation !== 'all',
-    selectedRole !== 'all',
-    dateFrom || dateTo
-  ].filter(Boolean).length;
+  const handleSatisfactionMinChange = (value: number) => {
+    setSatisfactionRange(prev => ({ ...prev, min: Math.min(value, prev.max - 1) }));
+  };
 
+  const handleSatisfactionMaxChange = (value: number) => {
+    setSatisfactionRange(prev => ({ ...prev, max: Math.max(value, prev.min + 1) }));
+  };
+
+  const handlePerformanceMinChange = (value: number) => {
+    setPerformanceRange(prev => ({ ...prev, min: Math.min(value, prev.max - 1) }));
+  };
+
+  const handlePerformanceMaxChange = (value: number) => {
+    setPerformanceRange(prev => ({ ...prev, max: Math.max(value, prev.min + 1) }));
+  };
+  
   return (
-    <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${collapsed ? 'w-16' : 'w-80'}`}>
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-6">
-          {!collapsed && (
-            <div className="flex items-center space-x-2">
-              <h2 className="text-lg font-semibold text-gray-900">Advanced Filters</h2>
-              {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-          >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </Button>
-        </div>
-
-        {!collapsed && (
+    <div className={cn(
+      "h-[calc(100vh-4rem)] bg-gray-50 border-r border-gray-200 transition-all duration-300 overflow-hidden",
+      collapsed ? "w-12" : "w-80"
+    )}>
+      <div className="relative h-full">
+        {/* Toggle Button - Fixed positioning */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onToggle}
+          className="absolute -right-3 top-4 h-6 w-6 rounded-full flex items-center justify-center border border-gray-200 bg-white shadow-sm hover:bg-gray-50 p-0 z-10"
+        >
+          {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+        </Button>
+        
+        {/* Filter Content */}
+        <div className={cn("h-full overflow-y-auto p-4", collapsed ? "invisible" : "visible")}>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+            </h2>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleClearFilters}
+              className="text-xs text-gray-500 hover:text-gray-800 flex items-center"
+            >
+              <FilterX className="h-3 w-3 mr-1" />
+              Clear All
+            </Button>
+          </div>
+          
           <div className="space-y-6">
-            {/* Department Dropdown */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-3 block">Departments</Label>
-              <Popover open={departmentDropdownOpen} onOpenChange={setDepartmentDropdownOpen}>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-between text-left"
-                    onClick={() => setDepartmentDropdownOpen(!departmentDropdownOpen)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Building2 className="w-4 h-4" />
-                      <span>
-                        {selectedDepartments.length === 0 
-                          ? 'Select departments...' 
-                          : `${selectedDepartments.length} selected`
-                        }
-                      </span>
-                    </div>
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64 p-3" align="start">
-                  <div className="space-y-2">
-                    {availableDepartments.map((dept) => (
-                      <div key={dept} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={dept}
-                          checked={selectedDepartments.includes(dept)}
-                          onCheckedChange={() => handleDepartmentToggle(dept)}
-                        />
-                        <Label htmlFor={dept} className="text-sm font-normal">{dept}</Label>
-                      </div>
-                    ))}
-                    {selectedDepartments.length > 0 && (
-                      <div className="pt-2 border-t">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setSelectedDepartments([])}
-                          className="w-full text-xs"
-                        >
-                          Clear all
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
+            {/* Tenure Range - Updated Implementation */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="tenure-range">Years at Company</Label>
+                <span className="text-xs font-medium text-gray-500">
+                  {tenureRange.min} - {tenureRange.max} years
+                </span>
+              </div>
               
-              {/* Show selected departments as badges */}
-              {selectedDepartments.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {selectedDepartments.map((dept) => (
-                    <Badge key={dept} variant="secondary" className="text-xs">
-                      {dept}
-                      <button
-                        onClick={() => handleDepartmentToggle(dept)}
-                        className="ml-1 hover:bg-gray-300 rounded-full"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Min</span>
+                    <span>{tenureRange.min} years</span>
+                  </div>
+                  <Slider
+                    id="tenure-min"
+                    value={[tenureRange.min]}
+                    min={0}
+                    max={39}
+                    step={1}
+                    onValueChange={([value]) => handleTenureMinChange(value)}
+                  />
                 </div>
-              )}
+                
+                <div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Max</span>
+                    <span>{tenureRange.max} years</span>
+                  </div>
+                  <Slider
+                    id="tenure-max"
+                    value={[tenureRange.max]}
+                    min={1}
+                    max={40}
+                    step={1}
+                    onValueChange={([value]) => handleTenureMaxChange(value)}
+                  />
+                </div>
+              </div>
             </div>
-
-            {/* Tenure Range Slider */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                Tenure Range: {tenureRange[0]} - {tenureRange[1]} years
-              </Label>
-              <Slider
-                value={tenureRange}
-                onValueChange={setTenureRange}
-                max={20}
-                min={0}
-                step={0.5}
-                className="w-full"
-              />
+            
+            {/* Job Satisfaction - Updated Implementation */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="satisfaction-range">Job Satisfaction</Label>
+                <span className="text-xs font-medium text-gray-500">
+                  {satisfactionRange.min} - {satisfactionRange.max}
+                </span>
+              </div>
+              
+              <div className="space-y-4 pt-2">
+                <div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Min (Low)</span>
+                    <span>{satisfactionRange.min}</span>
+                  </div>
+                  <Slider
+                    id="satisfaction-min"
+                    value={[satisfactionRange.min]}
+                    min={1}
+                    max={3}
+                    step={1}
+                    onValueChange={([value]) => handleSatisfactionMinChange(value)}
+                  />
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Max (High)</span>
+                    <span>{satisfactionRange.max}</span>
+                  </div>
+                  <Slider
+                    id="satisfaction-max"
+                    value={[satisfactionRange.max]}
+                    min={2}
+                    max={4}
+                    step={1}
+                    onValueChange={([value]) => handleSatisfactionMaxChange(value)}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-between text-xs text-gray-500 pt-1">
+                <span>1 = Low</span>
+                <span>4 = Very High</span>
+              </div>
             </div>
-
-            {/* Satisfaction Range */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                Satisfaction Score: {satisfactionRange[0]} - {satisfactionRange[1]}
-              </Label>
-              <Slider
-                value={satisfactionRange}
-                onValueChange={setSatisfactionRange}
-                max={5}
-                min={1}
-                step={0.1}
-                className="w-full"
-              />
+            
+            {/* Performance Rating - Updated Implementation */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="performance-range">Performance Rating</Label>
+                <span className="text-xs font-medium text-gray-500">
+                  {performanceRange.min} - {performanceRange.max}
+                </span>
+              </div>
+              
+              <div className="space-y-4 pt-2">
+                <div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Min (Low)</span>
+                    <span>{performanceRange.min}</span>
+                  </div>
+                  <Slider
+                    id="performance-min"
+                    value={[performanceRange.min]}
+                    min={1}
+                    max={4}
+                    step={1}
+                    onValueChange={([value]) => handlePerformanceMinChange(value)}
+                  />
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Max (High)</span>
+                    <span>{performanceRange.max}</span>
+                  </div>
+                  <Slider
+                    id="performance-max"
+                    value={[performanceRange.max]}
+                    min={2}
+                    max={5}
+                    step={1}
+                    onValueChange={([value]) => handlePerformanceMaxChange(value)}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-between text-xs text-gray-500 pt-1">
+                <span>1 = Low</span>
+                <span>5 = Excellent</span>
+              </div>
             </div>
-
-            {/* Performance Range */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                Performance Score: {performanceRange[0]} - {performanceRange[1]}
-              </Label>
-              <Slider
-                value={performanceRange}
-                onValueChange={setPerformanceRange}
-                max={5}
-                min={1}
-                step={0.1}
-                className="w-full"
-              />
+            
+            {/* Departments */}
+            <div className="space-y-2">
+              <Label>Departments</Label>
+              <div className="grid grid-cols-1 gap-2 mt-1">
+                {departments.map(dept => (
+                  <div key={dept} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`dept-${dept}`} 
+                      checked={selectedDepartments.includes(dept)}
+                      onCheckedChange={() => handleDepartmentChange(dept)}
+                    />
+                    <Label htmlFor={`dept-${dept}`} className="text-sm cursor-pointer">{dept}</Label>
+                  </div>
+                ))}
+              </div>
             </div>
-
-            {/* At-Risk Toggle */}
+            
+            {/* At-Risk Employees Only */}
             <div className="flex items-center space-x-2">
-              <Switch
-                id="at-risk"
+              <Switch 
+                id="at-risk" 
                 checked={onlyAtRisk}
                 onCheckedChange={setOnlyAtRisk}
               />
-              <Label htmlFor="at-risk" className="text-sm font-medium">Show only at-risk employees</Label>
+              <Label htmlFor="at-risk">At-Risk Employees Only</Label>
             </div>
-
-            {/* Gender Filter */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Gender</Label>
-              <Select value={selectedGender} onValueChange={setSelectedGender}>
-                <SelectTrigger>
-                  <SelectValue />
+            
+            {/* Gender */}
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender</Label>
+              <Select value={gender} onValueChange={setGender}>
+                <SelectTrigger id="gender">
+                  <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Genders</SelectItem>
@@ -288,91 +376,91 @@ const EnhancedFilters = ({ collapsed, onToggle, onFiltersApplied }: EnhancedFilt
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Education Level */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Education Level</Label>
-              <Select value={selectedEducation} onValueChange={setSelectedEducation}>
-                <SelectTrigger>
-                  <SelectValue />
+            
+            {/* Education */}
+            <div className="space-y-2">
+              <Label htmlFor="education">Education Level</Label>
+              <Select value={education} onValueChange={setEducation}>
+                <SelectTrigger id="education">
+                  <SelectValue placeholder="Select education" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Education Levels</SelectItem>
-                  {educationLevels.map((level) => (
-                    <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
-                  ))}
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="highschool">High School</SelectItem>
+                  <SelectItem value="bachelors">Bachelor's</SelectItem>
+                  <SelectItem value="masters">Master's</SelectItem>
+                  <SelectItem value="phd">PhD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
+            
             {/* Role Level */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Role Level</Label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger>
-                  <SelectValue />
+            <div className="space-y-2">
+              <Label htmlFor="role">Job Level</Label>
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger id="role">
+                  <SelectValue placeholder="Select role level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Role Levels</SelectItem>
-                  {roles.map((role) => (
-                    <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>
-                  ))}
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="entrylevel">Entry Level</SelectItem>
+                  <SelectItem value="midlevel">Mid Level</SelectItem>
+                  <SelectItem value="seniorlevel">Senior Level</SelectItem>
+                  <SelectItem value="lead">Team Lead</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="director">Director</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
+            
             {/* Date Range */}
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</Label>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2">
+              <Label>Date Range</Label>
+              <div className="grid gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateFrom ? format(dateFrom, "MMM dd") : "From"}
+                    <Button
+                      id="date"
+                      variant="outline"
+                      size="sm"
+                      className="justify-start text-left font-normal w-full"
+                    >
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      {dateRange.from ? (
+                        dateRange.to ? (
+                          <>
+                            {format(dateRange.from, "LLL dd, y")} -{" "}
+                            {format(dateRange.to, "LLL dd, y")}
+                          </>
+                        ) : (
+                          format(dateRange.from, "LLL dd, y")
+                        )
+                      ) : (
+                        <span>Pick a date range</span>
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      mode="single"
-                      selected={dateFrom}
-                      onSelect={setDateFrom}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateTo ? format(dateTo, "MMM dd") : "To"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateTo}
-                      onSelect={setDateTo}
+                      mode="range"
+                      selected={dateRange}
+                      onSelect={setDateRange}
                       initialFocus
                     />
                   </PopoverContent>
                 </Popover>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="space-y-3 pt-4 border-t">
-              <Button className="w-full" onClick={handleApplyFilters}>
-                <Filter className="w-4 h-4 mr-2" />
-                Apply Filters
-              </Button>
-              <Button variant="outline" className="w-full" onClick={handleResetFilters}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Reset All
-              </Button>
-            </div>
+            
+            {/* Apply Filters Button */}
+            <Button 
+              className="w-full" 
+              onClick={handleApplyFilters}
+            >
+              Apply Filters
+            </Button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
