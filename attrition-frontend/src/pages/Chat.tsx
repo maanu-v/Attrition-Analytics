@@ -281,7 +281,12 @@ const Chat = () => {
             em: ({ node, ...props }) => <em className="italic" {...props} />,
             
             // Style code blocks
-            code: ({ node, inline, className, children, ...props }) => {
+            code: ({ node, inline, className, children, ...props }: {
+              node?: any;
+              inline?: boolean;
+              className?: string;
+              children?: React.ReactNode;
+            } & React.HTMLAttributes<HTMLElement>) => {
               if (inline) {
                 return <code className="bg-gray-100 px-1 rounded text-sm font-mono" {...props}>{children}</code>;
               }

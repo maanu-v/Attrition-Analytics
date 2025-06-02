@@ -15,6 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
+import { DateRange } from "react-day-picker";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -55,10 +56,7 @@ const EnhancedFilters: React.FC<FilterProps> = ({
   const [gender, setGender] = useState('all');
   const [education, setEducation] = useState('all');
   const [role, setRole] = useState('all');
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: undefined,
     to: undefined,
   });
@@ -435,7 +433,7 @@ const EnhancedFilters: React.FC<FilterProps> = ({
                     <Calendar
                       mode="range"
                       selected={dateRange}
-                      onSelect={setDateRange}
+                      onSelect={(range) => setDateRange(range || { from: undefined, to: undefined })}
                       initialFocus
                     />
                   </PopoverContent>
