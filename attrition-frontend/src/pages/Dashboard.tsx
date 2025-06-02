@@ -6,14 +6,11 @@ import {
   DollarSign, 
   Calendar,
   Download,
-  BarChart3,
-  ChevronLeft,
   Target,
   Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
   Select,
   SelectContent,
@@ -22,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
-// import EnhancedFilters from '@/components/dashboard/EnhancedFilters';
+import NavHeader from '@/components/layout/NavHeader';
 import { 
   fetchOverallStatistics, 
   fetchEmployeeCount,
@@ -106,70 +103,50 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shadow-sm">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Button>
-          <Separator orientation="vertical" className="h-6" />
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
+    <div className="flex flex-col h-screen w-full overflow-hidden">
+      {/* Use NavHeader with consistent styling */}
+      <NavHeader />
+
+      {/* Main Content Area - Fixed layout to work with consistent header height */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6">
+          {/* Dashboard Controls */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Dashboard Overview</h2>
+            <div className="flex items-center space-x-3">
+              <Select value={selectedDataset} onValueChange={setSelectedDataset}>
+                <SelectTrigger className="w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HR-Employee-Attrition-All.csv">HR-Employee-Attrition-All.csv</SelectItem>
+                  <SelectItem value="Performance_Reviews_2024.csv">Performance_Reviews_2024.csv</SelectItem>
+                  <SelectItem value="Salary_Data_2023-2024.csv">Salary_Data_2023-2024.csv</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button variant="outline" size="sm" onClick={() => navigate('/advanced')}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Apply Filters
+              </Button>
+              
+              <Button variant="outline" size="sm" onClick={() => handleExport('all')}>
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
             </div>
-            <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
           </div>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <Select value={selectedDataset} onValueChange={setSelectedDataset}>
-            <SelectTrigger className="w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="HR-Employee-Attrition-All.csv">HR-Employee-Attrition-All.csv</SelectItem>
-              <SelectItem value="Performance_Reviews_2024.csv">Performance_Reviews_2024.csv</SelectItem>
-              <SelectItem value="Salary_Data_2023-2024.csv">Salary_Data_2023-2024.csv</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" size="sm" onClick={() => navigate('/advanced')}>
-            <Calendar className="w-4 h-4 mr-2" />
-            Apply Filters
-          </Button>
-          
-          <Button variant="outline" size="sm" onClick={() => handleExport('all')}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </header>
 
-      <div className="flex h-[calc(100vh-4rem)]">
-        {/* Enhanced Sidebar
-        <EnhancedFilters 
-          collapsed={sidebarCollapsed} 
-          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
-        /> */}
-
-        {/* Main Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+          {/* Dashboard Content */}
           {loading ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-64">
               <div className="flex flex-col items-center">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
                 <p className="text-gray-600">Loading dashboard data...</p>
               </div>
             </div>
           ) : error ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-64">
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 max-w-md">
                 <p>{error}</p>
                 <Button 

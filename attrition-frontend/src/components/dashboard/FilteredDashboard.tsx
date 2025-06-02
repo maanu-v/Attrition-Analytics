@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import EnhancedFilters from './EnhancedFilters';
-import { Loader2, RefreshCw, AlertCircle, ChevronLeft } from 'lucide-react';
+import { Loader2, RefreshCw, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AttritionChart from './AttritionChart';
 import FactorsChart from './FactorsChart';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import NavHeader from '@/components/layout/NavHeader';
 import { 
   fetchAttritionByDepartment, 
   fetchFactorsCorrelation,
@@ -47,7 +47,6 @@ interface FilterState {
 
 const FilteredDashboard: React.FC = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [attritionByDeptData, setAttritionByDeptData] = useState<AttritionData | null>(null);
@@ -256,49 +255,15 @@ const FilteredDashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      {/* Header with Back Button */}
-      <header className="bg-white border-b border-gray-200 p-4 shadow-sm z-10">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/dashboard')}
-              className="mr-4"
-              size="sm"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-            <h1 className="text-2xl font-bold">
-              Attrition Analytics Dashboard
-              {dashboardData?.filteredData && activeFiltersCount > 0 && (
-                <span className="ml-2 text-sm font-normal bg-blue-100 text-blue-800 py-1 px-2 rounded-full">
-                  {activeFiltersCount} {activeFiltersCount === 1 ? 'filter' : 'filters'} applied
-                </span>
-              )}
-            </h1>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="flex items-center gap-1"
-          >
-            {isRefreshing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Refresh
-          </Button>
-        </div>
-      </header>
+    <div className="flex flex-col h-screen w-full overflow-hidden">
+      {/* NavHeader */}
+      <NavHeader />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Filter Panel */}
-        <div className="relative">
+      <div className="flex flex-1 w-full overflow-hidden relative">
+        {/* Filter Panel with fixed position */}
+        <div className={`fixed top-[73px] bottom-0 z-20 transition-all duration-300 ${
+          filtersCollapsed ? 'left-[-4rem]' : 'left-0'
+        }`}>
           <EnhancedFilters 
             collapsed={filtersCollapsed} 
             onToggle={() => setFiltersCollapsed(!filtersCollapsed)}
@@ -308,8 +273,51 @@ const FilteredDashboard: React.FC = () => {
           />
         </div>
         
-        {/* Main Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        {/* Toggle Button - Separate from EnhancedFilters for better visibility */}
+        <button
+          onClick={() => setFiltersCollapsed(!filtersCollapsed)}
+          className={`fixed top-20 z-30 flex items-center justify-center bg-white rounded-r-md border border-l-0 border-gray-200 shadow-md h-10 w-6 transition-all duration-300 hover:bg-gray-50 ${
+            filtersCollapsed ? 'left-0' : 'left-[19rem]'
+          }`}
+        >
+          {filtersCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+        
+        {/* Main Content - position with left margin that adjusts based on sidebar state */}
+        <div className={`flex-1 p-4 md:p-6 overflow-y-auto w-full transition-all duration-300 ${
+          filtersCollapsed ? 'ml-0' : 'ml-80'
+        }`}>
+          {/* Dashboard Title and Refresh Button */}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">
+              Attrition Analytics
+              {dashboardData?.filteredData && activeFiltersCount > 0 && (
+                <span className="ml-2 text-sm font-normal bg-blue-100 text-blue-800 py-1 px-2 rounded-full">
+                  {activeFiltersCount} {activeFiltersCount === 1 ? 'filter' : 'filters'} applied
+                </span>
+              )}
+            </h2>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-1"
+            >
+              {isRefreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Refresh
+            </Button>
+          </div>
+          
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="flex flex-col items-center gap-2">

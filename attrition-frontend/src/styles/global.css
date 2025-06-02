@@ -4,8 +4,42 @@ html, body, #root {
   width: 100%;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
 }
 
+/* Remove default padding/margin that might cause spacing issues */
+body {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Full width container for pages that need centered content with max width */
+.content-container {
+  width: 100%;
+  max-width: 1920px; /* Very wide max-width to accommodate large screens */
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* When we need padding inside content areas, not at the app root */
+.content-padding {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .content-padding {
+    padding: 1.5rem;
+  }
+}
+
+/* Fix for overlapping elements and proper positioning */
+.relative-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Consistent container styles */
 .container {
   width: 100%;
   max-width: 1440px;
@@ -17,6 +51,49 @@ html, body, #root {
   .container {
     padding: 0 2rem;
   }
+}
+
+/* Fix for content positioning below the navbar */
+.content-below-navbar {
+  padding-top: 73px;
+}
+
+/* Consistent active navigation indicator */
+.nav-link-active {
+  color: #2563eb;
+  font-weight: 600;
+  position: relative;
+}
+
+.nav-link-active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #2563eb;
+  border-radius: 1px;
+}
+
+/* Consistent shadow classes */
+.subtle-shadow {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.hover-shadow {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-shadow:hover {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Ensure main app container takes full height */
+#app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Fix for date picker popover */
@@ -46,4 +123,116 @@ select:focus-visible,
 textarea:focus-visible {
   outline: 2px solid rgba(59, 130, 246, 0.5);
   outline-offset: 2px;
+}
+
+/* Ensure consistent navbar height across all pages */
+header.nav-header {
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+}
+
+/* Main content area positioning */
+.content-below-header {
+  height: calc(100vh - 64px);
+  margin-top: 64px;
+}
+
+/* Fix for dashboard layout */
+.dashboard-container {
+  height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+
+/* Global scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Sidebar toggle button styling */
+.sidebar-toggle-button {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.sidebar-toggle-button:hover {
+  background-color: #f9fafb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Left sidebar toggle position - Improved positioning */
+.left-sidebar-toggle {
+  left: calc(100% - 12px);
+  top: 16px;
+  width: 24px !important;
+  height: 24px !important;
+  z-index: 60; /* Ensure it's above other elements */
+  transform: translateX(50%); /* Center the button on the edge */
+}
+
+/* Make sure button is visible */
+.left-sidebar-toggle:before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background-color: transparent;
+}
+
+/* Right sidebar toggle position */
+.right-sidebar-toggle {
+  right: calc(100% - 12px);
+  top: 16px;
+}
+
+/* Enhanced sidebar toggle button - Make sure it's visible */
+.sidebar-toggle-fixed {
+  position: absolute;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  z-index: 100 !important; /* Ensure it's above other elements */
+  padding: 0 !important;
+  transform: translateX(50%) !important;
+  right: -16px !important;
+  top: 16px !important;
+}
+
+/* Add hover effect */
+.sidebar-toggle-fixed:hover {
+  background-color: #f9fafb !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
 }

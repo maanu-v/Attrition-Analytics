@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, RotateCcw, ChevronLeft, ChevronRight, Settings, BotMessageSquare, Database, Eye, BarChart3, Brain, AlertTriangle, FileSpreadsheet, Target, Clock, TrendingUp, Loader2 } from 'lucide-react';
+import { Send, RotateCcw, ChevronRight, ChevronLeft, Settings, BotMessageSquare, Eye, BarChart3, Brain, AlertTriangle, FileSpreadsheet, Target, Clock, TrendingUp, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import NavHeader from '@/components/layout/NavHeader';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { 
@@ -34,7 +33,6 @@ interface AnalysisAction {
 
 const Chat = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -324,51 +322,41 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shadow-sm z-50">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-gray-900"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <Separator orientation="vertical" className="h-6" />
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <BotMessageSquare className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-semibold text-gray-900">HR Analytics Assistant</h1>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleResetChat}
-            disabled={isLoading || messages.length <= 1}
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Reset Chat
-          </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Button>
-        </div>
-      </header>
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Single NavHeader for the entire page */}
+      <NavHeader />
       
-      <div className="flex flex-1 pt-16">
-        {/* Main Chat Area */}
+      {/* Main content area with action buttons in top-right */}
+      <div className="flex flex-1 pt-1">
+        {/* Chat Area */}
         <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'mr-80' : 'mr-0'}`}>
+          {/* Action buttons and chat header - FIXED LAYOUT */}
+          <div className="flex justify-between items-center px-6 py-4 bg-white border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <BotMessageSquare className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">HR Analytics Assistant</h2>
+                <p className="text-sm text-gray-500">AI-powered insights for HR data</p>
+              </div>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleResetChat}
+              disabled={isLoading || messages.length <= 1}
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset Chat
+            </Button>
+          </div>
+          
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {messages.map((message) => (
+            {/* Show all messages including the first welcome message */}
+            {messages.map((message, index) => (
               <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-2xl ${message.type === 'user' ? 'order-2' : 'order-1'}`}>
                   <div className={`rounded-2xl px-4 py-3 shadow-sm ${
@@ -386,6 +374,7 @@ const Chat = () => {
               </div>
             ))}
             
+            {/* Loading indicator */}
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-white text-gray-900 shadow-sm border border-gray-200 rounded-2xl px-4 py-3 max-w-xs">
@@ -401,8 +390,9 @@ const Chat = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggested Queries */}
+          {/* Suggested Queries and Input Area */}
           <div className="px-6 py-3 border-t border-gray-200 bg-white">
+            {/* Suggested Queries */}
             <div className="flex flex-wrap gap-2 mb-4">
               {suggestedQueries.map((query, index) => (
                 <Button
@@ -456,8 +446,8 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className={`fixed top-16 right-0 h-[calc(100vh-4rem)] bg-white border-l border-gray-200 shadow-lg transition-all duration-300 z-40 ${
+        {/* Sidebar - keep the existing implementation */}
+        <div className={`fixed top-[64px] right-0 h-[calc(100vh-64px)] bg-white border-l border-gray-200 shadow-lg transition-all duration-300 z-40 ${
           sidebarOpen ? 'w-80' : 'w-0'
         }`}>
           {/* Sidebar Toggle Button */}
@@ -465,13 +455,21 @@ const Chat = () => {
             variant="outline"
             size="sm"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="absolute -left-12 top-4 h-9 w-9 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 z-50 flex items-center justify-center"
+            className="absolute -left-10 top-4 h-8 w-8 rounded-full flex items-center justify-center border border-gray-200 bg-white shadow-sm hover:bg-gray-50 p-0"
           >
-            {sidebarOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {sidebarOpen ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
           </Button>
 
           {sidebarOpen && (
             <div className="h-full overflow-y-auto p-4 space-y-4">
+              {/* Sidebar Title */}
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-gray-900">AI Assistant Tools</h3>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
+
               {/* Dataset Information */}
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-2">Dataset Information</h3>

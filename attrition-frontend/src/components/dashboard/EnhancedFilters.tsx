@@ -166,21 +166,12 @@ const EnhancedFilters: React.FC<FilterProps> = ({
   
   return (
     <div className={cn(
-      "h-[calc(100vh-4rem)] bg-gray-50 border-r border-gray-200 transition-all duration-300 overflow-hidden",
-      collapsed ? "w-12" : "w-80"
+      "h-[calc(100vh-73px)] bg-gray-50 border-r border-gray-200 transition-all duration-300 overflow-hidden",
+      collapsed ? "w-16" : "w-80"
     )}>
-      <div className="relative h-full">
-        {/* Toggle Button - Fixed positioning */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggle}
-          className="absolute -right-3 top-4 h-6 w-6 rounded-full flex items-center justify-center border border-gray-200 bg-white shadow-sm hover:bg-gray-50 p-0 z-10"
-        >
-          {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-        </Button>
-        
-        {/* Filter Content */}
+      {/* Remove the toggle button from here since we're handling it in the parent component */}
+      
+      <div className="h-full overflow-y-auto">
         <div className={cn("h-full overflow-y-auto p-4", collapsed ? "invisible" : "visible")}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold flex items-center">

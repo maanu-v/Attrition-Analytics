@@ -1,3 +1,5 @@
+// DEPRECATED: This component has been replaced by NavHeader component
+// This file can be safely deleted
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
