@@ -49,7 +49,7 @@ The HR Attrition Analytics Platform helps organizations understand employee attr
 
 1. Clone the repository:
    ```bash
-   git clone [repository-url]
+   git clone [https://github.com/maanu-v/Attrition-Analytics/]
    cd attrition-backend
    ```
 
