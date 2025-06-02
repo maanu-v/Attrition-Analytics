@@ -1,22 +1,51 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, RotateCcw, Download, Database, X, Mic, Clock, FileText, ThumbsUp, ThumbsDown, ChevronLeft, ChevronRight, Eye, BarChart3, TrendingUp, Brain, AlertTriangle, FileSpreadsheet, Target, Settings, BotMessageSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
-import DatasetImportModal from '@/components/chat/DatasetImportModal';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Send,
+  Paperclip,
+  RotateCcw,
+  Download,
+  Database,
+  X,
+  Mic,
+  Clock,
+  FileText,
+  ThumbsUp,
+  ThumbsDown,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  BarChart3,
+  TrendingUp,
+  Brain,
+  AlertTriangle,
+  FileSpreadsheet,
+  Target,
+  Settings,
+  BotMessageSquare,
+  Building2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import DatasetImportModal from "@/components/chat/DatasetImportModal";
 
 interface Message {
   id: string;
-  type: 'user' | 'assistant';
+  type: "user" | "assistant";
   content: string;
   timestamp: Date;
-  attachments?: Array<{ type: 'image' | 'file'; url: string; name: string }>;
+  attachments?: Array<{ type: "image" | "file"; url: string; name: string }>;
   action?: {
     name: string;
     color: string;
@@ -30,61 +59,91 @@ interface Dataset {
   rows: number;
   columns: number;
   updatedAt: Date;
-  quality: 'Good' | 'Fair' | 'Poor';
+  quality: "Good" | "Fair" | "Poor";
   columnPreview: string[];
 }
 
 const Chat = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      type: 'assistant',
-      content: 'Hello! I can help you analyze your HR data, create visualizations, and provide insights on employee performance, attrition, and demographics. What would you like to explore today?',
-      timestamp: new Date(Date.now() - 60000)
-    }
+      id: "1",
+      type: "assistant",
+      content:
+        "Hello! I can help you analyze your HR data, create visualizations, and provide insights on employee performance, attrition, and demographics. What would you like to explore today?",
+      timestamp: new Date(Date.now() - 60000),
+    },
   ]);
-  
+
   const [datasets] = useState<Dataset[]>([
     {
-      id: '1',
-      name: 'Employee_Data_2024.csv',
-      fileName: 'Employee_Data_2024.csv',
+      id: "1",
+      name: "Employee_Data_2024.csv",
+      fileName: "Employee_Data_2024.csv",
       rows: 1247,
       columns: 15,
       updatedAt: new Date(Date.now() - 7200000),
-      quality: 'Good',
-      columnPreview: ['Employee_ID', 'Name', 'Department', 'Position', 'Salary', 'Performance_Score', 'Attrition_Risk', 'Hire_Date', 'Manager_ID']
+      quality: "Good",
+      columnPreview: [
+        "Employee_ID",
+        "Name",
+        "Department",
+        "Position",
+        "Salary",
+        "Performance_Score",
+        "Attrition_Risk",
+        "Hire_Date",
+        "Manager_ID",
+      ],
     },
     {
-      id: '2',
-      name: 'Performance_Reviews_2024.csv',
-      fileName: 'Performance_Reviews_2024.csv',
+      id: "2",
+      name: "Performance_Reviews_2024.csv",
+      fileName: "Performance_Reviews_2024.csv",
       rows: 1180,
       columns: 12,
       updatedAt: new Date(Date.now() - 3600000),
-      quality: 'Good',
-      columnPreview: ['Review_ID', 'Employee_ID', 'Quarter', 'Rating', 'Goals_Met', 'Feedback', 'Improvement_Areas']
+      quality: "Good",
+      columnPreview: [
+        "Review_ID",
+        "Employee_ID",
+        "Quarter",
+        "Rating",
+        "Goals_Met",
+        "Feedback",
+        "Improvement_Areas",
+      ],
     },
     {
-      id: '3',
-      name: 'Salary_Data_2023-2024.csv',
-      fileName: 'Salary_Data_2023-2024.csv',
+      id: "3",
+      name: "Salary_Data_2023-2024.csv",
+      fileName: "Salary_Data_2023-2024.csv",
       rows: 2495,
       columns: 8,
       updatedAt: new Date(Date.now() - 1800000),
-      quality: 'Fair',
-      columnPreview: ['Employee_ID', 'Base_Salary', 'Bonus', 'Benefits', 'Total_Compensation', 'Year', 'Department']
-    }
+      quality: "Fair",
+      columnPreview: [
+        "Employee_ID",
+        "Base_Salary",
+        "Bonus",
+        "Benefits",
+        "Total_Compensation",
+        "Year",
+        "Department",
+      ],
+    },
   ]);
-  
+
   const [currentDatasetIndex, setCurrentDatasetIndex] = useState(0);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [imagePreview, setImagePreview] = useState<{ url: string; name: string } | null>(null);
+  const [imagePreview, setImagePreview] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [datasetImportOpen, setDatasetImportOpen] = useState(false);
@@ -96,7 +155,7 @@ const Chat = () => {
   const [capsuleWidth, setCapsuleWidth] = useState<number>(0);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -108,14 +167,14 @@ const Chat = () => {
 
     const newMessage: Message = {
       id: Date.now().toString(),
-      type: 'user',
+      type: "user",
       content: inputValue,
       timestamp: new Date(),
-      action: selectedAction // Add this to your Message interface
+      action: selectedAction, // Add this to your Message interface
     };
 
-    setMessages(prev => [...prev, newMessage]);
-    setInputValue('');
+    setMessages((prev) => [...prev, newMessage]);
+    setInputValue("");
     setSelectedAction(null); // Reset the selected action after sending
     setIsTyping(true);
 
@@ -123,20 +182,25 @@ const Chat = () => {
     setTimeout(() => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: 'I understand you\'re looking for insights about your HR data. Let me analyze the current dataset and provide you with relevant metrics. Based on the employee data, I can see some interesting patterns in attrition rates and performance metrics.',
+        type: "assistant",
+        content:
+          "I understand you're looking for insights about your HR data. Let me analyze the current dataset and provide you with relevant metrics. Based on the employee data, I can see some interesting patterns in attrition rates and performance metrics.",
         timestamp: new Date(),
         attachments: [
-          { type: 'image', url: '/placeholder.svg', name: 'attrition_chart.png' }
-        ]
+          {
+            type: "image",
+            url: "/placeholder.svg",
+            name: "attrition_chart.png",
+          },
+        ],
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages((prev) => [...prev, aiResponse]);
       setIsTyping(false);
     }, 2000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -149,7 +213,9 @@ const Chat = () => {
   const handleDatasetImport = (datasets: any[]) => {
     toast({
       title: "Datasets imported",
-      description: `${datasets.length} dataset${datasets.length > 1 ? 's' : ''} ready for analysis.`,
+      description: `${datasets.length} dataset${
+        datasets.length > 1 ? "s" : ""
+      } ready for analysis.`,
     });
   };
 
@@ -158,53 +224,122 @@ const Chat = () => {
   };
 
   const prevDataset = () => {
-    setCurrentDatasetIndex((prev) => (prev - 1 + datasets.length) % datasets.length);
+    setCurrentDatasetIndex(
+      (prev) => (prev - 1 + datasets.length) % datasets.length
+    );
   };
 
   const suggestionChips = [
-    'Show employee attrition trend',
-    'Top 5 performers this quarter',
-    'Department-wise salary analysis',
-    'Predict high-risk employees'
+    "Show employee attrition trend",
+    "Top 5 performers this quarter",
+    "Department-wise salary analysis",
+    "Predict high-risk employees",
   ];
 
   const quickInsights = [
-    { label: 'Attrition Rate', value: '12.3%', color: 'bg-blue-100 text-blue-700' },
-    { label: 'Avg Performance', value: '4.2', color: 'bg-green-100 text-green-700' },
-    { label: 'Open Positions', value: '23', color: 'bg-orange-100 text-orange-700' },
-    { label: 'Avg Tenure', value: '3.7yr', color: 'bg-purple-100 text-purple-700' },
-    { label: 'Training Hours', value: '42.5', color: 'bg-teal-100 text-teal-700' },
-    { label: 'Satisfaction', value: '8.1/10', color: 'bg-pink-100 text-pink-700' }
+    {
+      label: "Attrition Rate",
+      value: "12.3%",
+      color: "bg-blue-100 text-blue-700",
+    },
+    {
+      label: "Avg Performance",
+      value: "4.2",
+      color: "bg-green-100 text-green-700",
+    },
+    {
+      label: "Open Positions",
+      value: "23",
+      color: "bg-orange-100 text-orange-700",
+    },
+    {
+      label: "Avg Tenure",
+      value: "3.7yr",
+      color: "bg-purple-100 text-purple-700",
+    },
+    {
+      label: "Training Hours",
+      value: "42.5",
+      color: "bg-teal-100 text-teal-700",
+    },
+    {
+      label: "Satisfaction",
+      value: "8.1/10",
+      color: "bg-pink-100 text-pink-700",
+    },
   ];
 
   const availableActions = [
-    { name: 'Descriptive analysis', icon: BarChart3, color: 'text-blue-500 hover:bg-blue-50' },
-    { name: 'Predictive analysis', icon: TrendingUp, color: 'text-emerald-500 hover:bg-emerald-50' },
-    { name: 'Prescriptive analysis', icon: Brain, color: 'text-purple-500 hover:bg-purple-50' },
-    { name: 'Statistical summary', icon: FileSpreadsheet, color: 'text-orange-500 hover:bg-orange-50' },
-    { name: 'Generate reports', icon: FileText, color: 'text-slate-600 hover:bg-slate-50' },
-    { name: 'Risk assessment', icon: AlertTriangle, color: 'text-red-500 hover:bg-red-50' },
-    { name: 'Trend forecasting', icon: Target, color: 'text-indigo-500 hover:bg-indigo-50' },
-    { name: 'Time series analysis', icon: Clock, color: 'text-cyan-500 hover:bg-cyan-50' }
+    {
+      name: "Descriptive analysis",
+      icon: BarChart3,
+      color: "text-blue-500 hover:bg-blue-50",
+    },
+    {
+      name: "Predictive analysis",
+      icon: TrendingUp,
+      color: "text-emerald-500 hover:bg-emerald-50",
+    },
+    {
+      name: "Prescriptive analysis",
+      icon: Brain,
+      color: "text-purple-500 hover:bg-purple-50",
+    },
+    {
+      name: "Statistical summary",
+      icon: FileSpreadsheet,
+      color: "text-orange-500 hover:bg-orange-50",
+    },
+    {
+      name: "Generate reports",
+      icon: FileText,
+      color: "text-slate-600 hover:bg-slate-50",
+    },
+    {
+      name: "Risk assessment",
+      icon: AlertTriangle,
+      color: "text-red-500 hover:bg-red-50",
+    },
+    {
+      name: "Trend forecasting",
+      icon: Target,
+      color: "text-indigo-500 hover:bg-indigo-50",
+    },
+    {
+      name: "Time series analysis",
+      icon: Clock,
+      color: "text-cyan-500 hover:bg-cyan-50",
+    },
   ];
 
   // Update the getBrightColor function with softer gradients
   const getBrightColor = (actionName: string) => {
     const colors: { [key: string]: string } = {
-      'Descriptive analysis': 'bg-gradient-to-r from-blue-400/90 to-blue-500/90 text-white',
-      'Predictive analysis': 'bg-gradient-to-r from-emerald-400/90 to-emerald-500/90 text-white',
-      'Prescriptive analysis': 'bg-gradient-to-r from-purple-400/90 to-purple-500/90 text-white',
-      'Statistical summary': 'bg-gradient-to-r from-orange-400/90 to-orange-500/90 text-white',
-      'Generate reports': 'bg-gradient-to-r from-slate-400/90 to-slate-500/90 text-white',
-      'Risk assessment': 'bg-gradient-to-r from-red-400/90 to-red-500/90 text-white',
-      'Trend forecasting': 'bg-gradient-to-r from-indigo-400/90 to-indigo-500/90 text-white',
-      'Time series analysis': 'bg-gradient-to-r from-cyan-400/90 to-cyan-500/90 text-white'
+      "Descriptive analysis":
+        "bg-gradient-to-r from-blue-400/90 to-blue-500/90 text-white",
+      "Predictive analysis":
+        "bg-gradient-to-r from-emerald-400/90 to-emerald-500/90 text-white",
+      "Prescriptive analysis":
+        "bg-gradient-to-r from-purple-400/90 to-purple-500/90 text-white",
+      "Statistical summary":
+        "bg-gradient-to-r from-orange-400/90 to-orange-500/90 text-white",
+      "Generate reports":
+        "bg-gradient-to-r from-slate-400/90 to-slate-500/90 text-white",
+      "Risk assessment":
+        "bg-gradient-to-r from-red-400/90 to-red-500/90 text-white",
+      "Trend forecasting":
+        "bg-gradient-to-r from-indigo-400/90 to-indigo-500/90 text-white",
+      "Time series analysis":
+        "bg-gradient-to-r from-cyan-400/90 to-cyan-500/90 text-white",
     };
-    return colors[actionName] || 'bg-gradient-to-r from-gray-400/90 to-gray-500/90 text-white';
+    return (
+      colors[actionName] ||
+      "bg-gradient-to-r from-gray-400/90 to-gray-500/90 text-white"
+    );
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   const currentDataset = datasets[currentDatasetIndex];
@@ -223,15 +358,15 @@ const Chat = () => {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 shadow-sm z-50">
         <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-gray-900"
+          <div
+            className="flex items-center gap-2 cursor-pointer select-none"
+            onClick={() => navigate("/")}
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Button>
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-blue-700">HR Insights</span>
+          </div>
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -240,7 +375,7 @@ const Chat = () => {
             <h1 className="text-xl font-semibold text-gray-900">Assistant</h1>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-4">
           <Button variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
@@ -252,44 +387,72 @@ const Chat = () => {
           </Button>
         </div>
       </header>
-      
+
       <div className="flex flex-1 pt-16">
         {/* Main Chat Area */}
-        <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'mr-96' : 'mr-0'}`}>
+        <div
+          className={`flex-1 flex flex-col transition-all duration-300 ${
+            sidebarOpen ? "mr-96" : "mr-0"
+          }`}
+        >
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {messages.map((message) => (
-              <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-2xl ${message.type === 'user' ? 'order-2' : 'order-1'}`}>
-                  <div className={`rounded-2xl px-4 py-3 shadow-sm ${
-                    message.type === 'user' 
-                      ? 'bg-blue-600 text-white ml-auto' 
-                      : 'bg-white text-gray-900 border border-gray-200'
-                  }`}>
+              <div
+                key={message.id}
+                className={`flex ${
+                  message.type === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`max-w-2xl ${
+                    message.type === "user" ? "order-2" : "order-1"
+                  }`}
+                >
+                  <div
+                    className={`rounded-2xl px-4 py-3 shadow-sm ${
+                      message.type === "user"
+                        ? "bg-blue-600 text-white ml-auto"
+                        : "bg-white text-gray-900 border border-gray-200"
+                    }`}
+                  >
                     {message.action && (
-                      <div className={`inline-flex items-center px-2 py-1 rounded-full text-sm ${message.action.color} bg-gray-50/10 mb-2`}>
+                      <div
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-sm ${message.action.color} bg-gray-50/10 mb-2`}
+                      >
                         {message.action.name}
                       </div>
                     )}
                     <p className="text-sm leading-relaxed">{message.content}</p>
-                    
+
                     {message.attachments && (
                       <div className="mt-3 space-y-2">
                         {message.attachments.map((attachment, index) => (
                           <div key={index} className="relative">
-                            {attachment.type === 'image' ? (
-                              <div 
+                            {attachment.type === "image" ? (
+                              <div
                                 className="bg-gray-100 rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer"
-                                onClick={() => openImagePreview(attachment.url, attachment.name)}
+                                onClick={() =>
+                                  openImagePreview(
+                                    attachment.url,
+                                    attachment.name
+                                  )
+                                }
                               >
-                                <img 
-                                  src={attachment.url} 
+                                <img
+                                  src={attachment.url}
                                   alt={attachment.name}
                                   className="w-full h-48 object-cover rounded-md bg-gray-200"
                                 />
                                 <div className="flex items-center justify-between mt-2">
-                                  <span className="text-xs text-gray-600">{attachment.name}</span>
-                                  <Button size="sm" variant="ghost" className="h-6 px-2">
+                                  <span className="text-xs text-gray-600">
+                                    {attachment.name}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 px-2"
+                                  >
                                     <Download className="w-3 h-3" />
                                   </Button>
                                 </div>
@@ -297,8 +460,14 @@ const Chat = () => {
                             ) : (
                               <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-2">
                                 <FileText className="w-4 h-4 text-gray-600" />
-                                <span className="text-sm text-gray-700">{attachment.name}</span>
-                                <Button size="sm" variant="ghost" className="h-6 px-2 ml-auto">
+                                <span className="text-sm text-gray-700">
+                                  {attachment.name}
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 ml-auto"
+                                >
                                   <Download className="w-3 h-3" />
                                 </Button>
                               </div>
@@ -308,15 +477,29 @@ const Chat = () => {
                       </div>
                     )}
                   </div>
-                  
-                  <div className={`flex items-center mt-2 space-x-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <span className="text-xs text-gray-500">{formatTime(message.timestamp)}</span>
-                    {message.type === 'assistant' && (
+
+                  <div
+                    className={`flex items-center mt-2 space-x-2 ${
+                      message.type === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <span className="text-xs text-gray-500">
+                      {formatTime(message.timestamp)}
+                    </span>
+                    {message.type === "assistant" && (
                       <div className="flex space-x-1">
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-green-50">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 hover:bg-green-50"
+                        >
                           <ThumbsUp className="w-3 h-3 text-gray-400 hover:text-green-600" />
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0 hover:bg-red-50">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 hover:bg-red-50"
+                        >
                           <ThumbsDown className="w-3 h-3 text-gray-400 hover:text-red-600" />
                         </Button>
                       </div>
@@ -325,19 +508,25 @@ const Chat = () => {
                 </div>
               </div>
             ))}
-            
+
             {isTyping && (
               <div className="flex justify-start">
                 <div className="bg-white text-gray-900 shadow-sm border border-gray-200 rounded-2xl px-4 py-3 max-w-xs">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"
+                      style={{ animationDelay: "0.4s" }}
+                    ></div>
                   </div>
                 </div>
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -369,14 +558,18 @@ const Chat = () => {
                     placeholder="Ask me anything about your HR data..."
                     className={`min-h-[50px] max-h-32 resize-none pr-20 border-gray-300 focus:border-blue-500 focus:ring-blue-500`}
                     style={{
-                      paddingLeft: selectedAction ? `${capsuleWidth}px` : '0.75rem'
+                      paddingLeft: selectedAction
+                        ? `${capsuleWidth}px`
+                        : "0.75rem",
                     }}
                   />
                   {selectedAction && (
-                    <div 
+                    <div
                       ref={capsuleRef}
-                      className={`absolute left-2.5 top-[10px] inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shadow-sm ${getBrightColor(selectedAction.name)}`}
-                      style={{ fontSize: '0.75rem', lineHeight: '1rem' }}
+                      className={`absolute left-2.5 top-[10px] inline-flex items-center px-2 py-0.5 rounded text-xs font-medium shadow-sm ${getBrightColor(
+                        selectedAction.name
+                      )}`}
+                      style={{ fontSize: "0.75rem", lineHeight: "1rem" }}
                     >
                       {selectedAction.name}
                       <Button
@@ -402,7 +595,7 @@ const Chat = () => {
                   </div>
                 </div>
               </div>
-              <Button 
+              <Button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim()}
                 className="h-[59px] px-6 bg-blue-600 hover:bg-blue-700"
@@ -414,9 +607,11 @@ const Chat = () => {
         </div>
 
         {/* Sidebar */}
-        <div className={`fixed top-16 right-0 h-[calc(100vh-4rem)] bg-white border-l border-gray-200 shadow-lg transition-all duration-300 z-40 ${
-          sidebarOpen ? 'w-96' : 'w-0'
-        }`}>
+        <div
+          className={`fixed top-16 right-0 h-[calc(100vh-4rem)] bg-white border-l border-gray-200 shadow-lg transition-all duration-300 z-40 ${
+            sidebarOpen ? "w-96" : "w-0"
+          }`}
+        >
           {/* Sidebar Toggle Button */}
           <Button
             variant="outline"
@@ -424,14 +619,18 @@ const Chat = () => {
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="absolute -left-12 top-4 h-9 w-9 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 z-50 flex items-center justify-center"
           >
-            {sidebarOpen ? <ChevronRight className="w-7 h-7" /> : <ChevronLeft className="w-4 h-4" />}
+            {sidebarOpen ? (
+              <ChevronRight className="w-7 h-7" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
           </Button>
 
           {sidebarOpen && (
             <div className="h-full overflow-y-auto">
               <div className="p-4 space-y-4">
                 {/* Import Dataset Button */}
-                <Button 
+                <Button
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => setDatasetImportOpen(true)}
                 >
@@ -442,20 +641,24 @@ const Chat = () => {
                 {/* Dataset Summary Container */}
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">Dataset Summary</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      Dataset Summary
+                    </h3>
                     <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={prevDataset}
                         className="h-6 w-6 p-0"
                       >
                         <ChevronLeft className="w-3 h-3" />
                       </Button>
-                      <span className="text-sm text-gray-500">{currentDatasetIndex + 1} / {datasets.length}</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <span className="text-sm text-gray-500">
+                        {currentDatasetIndex + 1} / {datasets.length}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={nextDataset}
                         className="h-6 w-6 p-0"
                       >
@@ -466,15 +669,30 @@ const Chat = () => {
 
                   <div className="space-y-3">
                     <div>
-                      <h4 className="font-medium text-gray-900 text-sm">{currentDataset.name}</h4>
-                      <p className="text-sm text-gray-500">{currentDataset.rows.toLocaleString()} rows • {currentDataset.columns} columns</p>
-                      <p className="text-xs text-gray-400">Updated: 2 hours ago</p>
+                      <h4 className="font-medium text-gray-900 text-sm">
+                        {currentDataset.name}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        {currentDataset.rows.toLocaleString()} rows •{" "}
+                        {currentDataset.columns} columns
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Updated: 2 hours ago
+                      </p>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
-                      <Badge 
-                        variant={currentDataset.quality === 'Good' ? 'default' : 'secondary'}
-                        className={currentDataset.quality === 'Good' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'}
+                      <Badge
+                        variant={
+                          currentDataset.quality === "Good"
+                            ? "default"
+                            : "secondary"
+                        }
+                        className={
+                          currentDataset.quality === "Good"
+                            ? "bg-green-100 text-green-800 border-green-200"
+                            : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                        }
                       >
                         {currentDataset.quality} Quality
                       </Badge>
@@ -485,17 +703,21 @@ const Chat = () => {
                     </div>
 
                     <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">Column Preview:</Label>
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Column Preview:
+                      </Label>
                       <div className="flex flex-wrap gap-1">
-                        {currentDataset.columnPreview.slice(0, 9).map((column, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="text-xs bg-white text-gray-700 border-gray-300"
-                          >
-                            {column}
-                          </Badge>
-                        ))}
+                        {currentDataset.columnPreview
+                          .slice(0, 9)
+                          .map((column, index) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="text-xs bg-white text-gray-700 border-gray-300"
+                            >
+                              {column}
+                            </Badge>
+                          ))}
                       </div>
                     </div>
                   </div>
@@ -503,18 +725,20 @@ const Chat = () => {
 
                 {/* Available Actions Container */}
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Available Actions</h5>
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3">
+                    Available Actions
+                  </h5>
                   <div className="space-y-2">
                     {availableActions.map((action, index) => (
-                      <Button 
+                      <Button
                         key={index}
-                        variant="ghost" 
-                        size="sm" 
+                        variant="ghost"
+                        size="sm"
                         className={`w-full justify-start ${action.color} hover:bg-gray-100`}
                         onClick={() => {
                           setSelectedAction({
                             name: action.name,
-                            color: getBrightColor(action.name) // Use getBrightColor here
+                            color: getBrightColor(action.name), // Use getBrightColor here
                           });
                           textareaRef.current?.focus();
                         }}
@@ -528,11 +752,18 @@ const Chat = () => {
 
                 {/* Quick Insights */}
                 <div className="flex-1">
-                  <h5 className="text-sm font-semibold text-gray-900 mb-3">Quick Insights</h5>
+                  <h5 className="text-sm font-semibold text-gray-900 mb-3">
+                    Quick Insights
+                  </h5>
                   <div className="grid grid-cols-2 gap-3">
                     {quickInsights.map((insight, index) => (
-                      <div key={index} className={`p-3 rounded-lg ${insight.color}`}>
-                        <div className="text-xs font-medium">{insight.label}</div>
+                      <div
+                        key={index}
+                        className={`p-3 rounded-lg ${insight.color}`}
+                      >
+                        <div className="text-xs font-medium">
+                          {insight.label}
+                        </div>
                         <div className="text-lg font-bold">{insight.value}</div>
                       </div>
                     ))}
@@ -558,8 +789,8 @@ const Chat = () => {
             <DialogTitle>{imagePreview?.name}</DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">
-            <img 
-              src={imagePreview?.url} 
+            <img
+              src={imagePreview?.url}
               alt={imagePreview?.name}
               className="max-w-full max-h-[70vh] object-contain"
             />

@@ -19,6 +19,7 @@ import AttritionChart from './AttritionChart';
 import FactorsChart from './FactorsChart';
 import PredictiveFactorsChart from './PredictiveFactorsChart';
 
+
 // Add proper interface for PredictiveFactorsChart props
 interface PredictiveFactorsChartProps {
   data: PredictiveFactors;

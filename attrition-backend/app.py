@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load the dataset
-dataset_path = '/home/Maanu/Documents/RoR Internship/Attrition-Analytics/datasets/HR-Employee-Attrition-All.csv'
+dataset_path = 'D:\Internship\Sundaresh sir\Base\Attrition-Analytics\datasets\HR-Employee-Attrition-All.csv'
 df = pd.read_csv(dataset_path)
 
 @app.route('/api/attrition-by-age', methods=['GET'])
