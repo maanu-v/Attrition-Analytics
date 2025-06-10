@@ -22,6 +22,7 @@ interface Message {
   type: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  plotImage?: string; // Optional base64 encoded image
 }
 
 interface AnalysisAction {
@@ -131,6 +132,7 @@ const Chat = () => {
           type: 'assistant',
           content: response.response,
           timestamp: new Date(),
+          plotImage: response.plot_image, // Add the plot image if available
         };
         
         setMessages(prev => [...prev, assistantMessage]);
@@ -252,9 +254,7 @@ const Chat = () => {
     "Predict which employees are at highest risk of leaving",
     "How does job satisfaction affect attrition?",
     "Recommend actions to reduce attrition in sales"
-  ];
-
-  // Render formatted message content with proper styling
+  ];    // Render formatted message content with proper styling
   const renderMessageContent = (content: string, messageType: 'user' | 'assistant') => {
     // Only apply markdown formatting to assistant messages
     if (messageType === 'user') {
@@ -308,6 +308,8 @@ const Chat = () => {
             a: ({ node, ...props }) => (
               <a className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
             ),
+            
+            // Style tables
             table: ({ node, ...props }) => (
               <div className="overflow-x-auto my-2">
                 <table className="min-w-full border-collapse border border-gray-300" {...props} />
@@ -316,7 +318,7 @@ const Chat = () => {
             thead: ({ node, ...props }) => <thead className="bg-gray-100" {...props} />,
             tbody: ({ node, ...props }) => <tbody {...props} />,
             tr: ({ node, ...props }) => <tr className="border-b border-gray-300" {...props} />,
-            th: ({ node, ...props }) => <th className="border border-gray-300 px-3 py-1 text-left" {...props} />,
+            th: ({ node, ...props }) => <th className="border border-gray-300 px-3 py-1 text-left font-medium" {...props} />,
             td: ({ node, ...props }) => <td className="border border-gray-300 px-3 py-1" {...props} />
           }}
         >
@@ -328,15 +330,17 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Single NavHeader for the entire page */}
-      <NavHeader />
+      {/* Fixed NavHeader */}
+      <div className="sticky top-0 z-50">
+        <NavHeader />
+      </div>
       
       {/* Main content area with action buttons in top-right */}
-      <div className="flex flex-1 pt-1">
+      <div className="flex flex-1 h-[calc(100vh-64px)]">
         {/* Chat Area */}
         <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'mr-80' : 'mr-0'}`}>
-          {/* Action buttons and chat header - FIXED LAYOUT */}
-          <div className="flex justify-between items-center px-6 py-4 bg-white border-b border-gray-200">
+          {/* Fixed Chat header */}
+          <div className="sticky top-0 z-40 flex justify-between items-center px-6 py-4 bg-white border-b border-gray-200 shadow-sm">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                 <BotMessageSquare className="w-6 h-6 text-white" />
@@ -358,7 +362,7 @@ const Chat = () => {
             </Button>
           </div>
           
-          {/* Chat Messages */}
+          {/* Chat Messages - Adjusted for fixed header */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Show all messages including the first welcome message */}
             {messages.map((message, index) => (
@@ -370,6 +374,17 @@ const Chat = () => {
                       : 'bg-white text-gray-900 border border-gray-200'
                   }`}>
                     {renderMessageContent(message.content, message.type)}
+                    
+                    {/* Display plot image if available */}
+                    {message.type === 'assistant' && message.plotImage && (
+                      <div className="mt-3 flex justify-center">
+                        <img 
+                          src={`data:image/png;base64,${message.plotImage}`} 
+                          alt="Data Visualization"
+                          className="max-w-full rounded-lg border border-gray-200 shadow-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                   
                   <div className={`flex items-center mt-2 space-x-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -395,8 +410,8 @@ const Chat = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Suggested Queries and Input Area */}
-          <div className="px-6 py-3 border-t border-gray-200 bg-white">
+          {/* Suggested Queries and Input Area - Fixed to bottom */}
+          <div className="sticky bottom-0 z-30 px-6 py-3 border-t border-gray-200 bg-white">
             {/* Suggested Queries */}
             <div className="flex flex-wrap gap-2 mb-4">
               {suggestedQueries.map((query, index) => (
@@ -451,7 +466,7 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* Sidebar - keep the existing implementation */}
+        {/* Sidebar - adjusted to account for fixed navbar */}
         <div className={`fixed top-[64px] right-0 h-[calc(100vh-64px)] bg-white border-l border-gray-200 shadow-lg transition-all duration-300 z-40 ${
           sidebarOpen ? 'w-80' : 'w-0'
         }`}>

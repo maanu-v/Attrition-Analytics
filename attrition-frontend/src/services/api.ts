@@ -39,6 +39,14 @@ export interface ChatRequest {
 export interface ChatResponse {
   response: string;
   status: 'success' | 'error';
+  plot_image?: string; // Base64 encoded plot image
+  plot_data?: {
+    type: string;
+    x_column: string;
+    y_column?: string;
+    title?: string;
+    hue?: string;
+  };
 }
 
 // Dataset metadata types

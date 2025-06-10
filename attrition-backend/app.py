@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load the dataset
-dataset_path = '/home/Maanu/Documents/RoR Internship/Attrition-Analytics/datasets/HR-Employee-Attrition-All.csv'
+dataset_path = '/home/Maanu/Documents/RoR Internship/Attrition-Analytics/Datasets/HR-Employee-Attrition-All.csv'
 df = pd.read_csv(dataset_path)
 
 # Initialize chatbot with the dataset
@@ -396,6 +396,43 @@ def quick_insights():
     }
     
     return jsonify(insights)
+
+@app.route('/api/debug-plot', methods=['POST'])
+def debug_plot():
+    """Debug endpoint to test plot generation directly."""
+    data = request.json
+    
+    if not data:
+        return jsonify({"error": "Missing request body"}), 400
+    
+    plot_type = data.get('type')
+    x_column = data.get('x_column')
+    y_column = data.get('y_column')
+    title = data.get('title', '')
+    hue = data.get('hue')
+    
+    if not plot_type or not x_column:
+        return jsonify({"error": "Missing required parameters"}), 400
+    
+    # Try to generate the plot
+    plot_image = chatbot.generate_plot(
+        plot_type=plot_type,
+        x_column=x_column,
+        y_column=y_column,
+        title=title,
+        hue=hue
+    )
+    
+    if not plot_image:
+        return jsonify({
+            "status": "error", 
+            "message": "Failed to generate plot"
+        }), 500
+    
+    return jsonify({
+        "status": "success",
+        "plot_image": plot_image
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
