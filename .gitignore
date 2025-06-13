@@ -10,3 +10,6 @@ wheels/
 .venv
 
 .env
+
+presentation-outline.md
+presentation-script.md

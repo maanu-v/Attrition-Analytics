@@ -137,19 +137,62 @@ const Chat = () => {
         
         setMessages(prev => [...prev, assistantMessage]);
       } else {
-        throw new Error(response.response || 'Failed to get response');
+        // Handle structured error response
+        const errorMsg = response.response || 'Failed to get response';
+        throw new Error(errorMsg);
       }
     } catch (error) {
+      console.error('Chat API error:', error);
+      
+      let errorMessage = "Failed to process your request";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object') {
+        // Handle fetch or Axios error objects
+        if ('statusText' in error) {
+          errorMessage = `Server error: ${(error as any).statusText || 'Unknown error'}`;
+        }
+        if ('status' in error) {
+          const status = (error as any).status;
+          if (status === 400) {
+            errorMessage = `Bad Request (400): The server couldn't process your request. Please try again with different input.`;
+          } else if (status === 401) {
+            errorMessage = `Authentication Error (401): Please log in again.`;
+          } else if (status === 403) {
+            errorMessage = `Permission Denied (403): You don't have access to this feature.`;
+          } else if (status === 404) {
+            errorMessage = `Not Found (404): The requested resource was not found.`;
+          } else if (status === 429) {
+            errorMessage = `Too Many Requests (429): Please wait before sending more requests.`;
+          } else if (status >= 500) {
+            errorMessage = `Server Error (${status}): The server encountered an issue. Please try again later.`;
+          }
+        }
+        // Try to extract more detailed error message from response
+        if ('response' in error && (error as any).response && 'data' in (error as any).response) {
+          const responseData = (error as any).response.data;
+          if (typeof responseData === 'string') {
+            errorMessage = responseData || errorMessage;
+          } else if (typeof responseData === 'object') {
+            // Extract error message from response data object
+            if (responseData.error) errorMessage = responseData.error;
+            else if (responseData.message) errorMessage = responseData.message;
+            else if (responseData.detail) errorMessage = responseData.detail;
+          }
+        }
+      }
+      
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process your request",
+        description: errorMessage,
         variant: "destructive"
       });
       
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: "I'm sorry, I encountered an error processing your request. Please try again.",
+        content: `I'm sorry, I encountered an error processing your request: ${errorMessage}`,
         timestamp: new Date(),
       }]);
     } finally {
