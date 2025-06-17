@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load the dataset
-dataset_path = '/home/Maanu/Documents/RoR Internship/Attrition-Analytics/Datasets/HR-Employee-Attrition-All.csv'
+dataset_path = 'attrition-backend/HR-Employee-Attrition-All.csv'
 df = pd.read_csv(dataset_path)
 
 # Initialize chatbot with the dataset
