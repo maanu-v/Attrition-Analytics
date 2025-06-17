@@ -2,8 +2,8 @@ services:
   - type: web
     name: attrition-backend
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn attrition-backend.main:app --host 0.0.0.0 --port 8000
+    buildCommand: uv sync
+    startCommand: cd attrition-backend && uv run app.py
     envVars:
       - key: PORT
         value: 8000
@@ -11,15 +11,15 @@ services:
     autoDeploy: true
     repo: https://github.com/maanu-v/attrition-analytics
     branch: main
-    rootDir: attrition-backend
+    rootDir: .
 
   - type: web
     name: attrition-frontend
-    env: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: out
+    env: node
+    buildCommand: cd attrition-frontend && npm install
+    startCommand: cd attrition-frontend && npm run dev
     plan: free
     autoDeploy: true
     repo: https://github.com/maanu-v/attrition-analytics
     branch: main
-    rootDir: attrition-frontend
+    rootDir: .
